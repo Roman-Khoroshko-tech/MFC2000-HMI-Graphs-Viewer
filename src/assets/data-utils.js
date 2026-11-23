@@ -22,4 +22,4 @@ function timeTicks(a,b,width){const steps=[1000,2000,5000,10000,15000,30000,6000
 
 function chartFraction(c,event){const r=c.canvas.getBoundingClientRect(),g=c.geometry||{left:70,pw:r.width-88};return Math.max(0,Math.min(1,(event.clientX-r.left-g.left)/g.pw));}
 
-function keyNavigation(e){if(!data)return;if(e.key==='ArrowLeft'){pan(-.25);}else if(e.key==='ArrowRight'){pan(.25);}else if(e.key==='+'||e.key==='='){zoom(.5);}else if(e.key==='-'||e.key==='−'){zoom(2);}else if(e.key==='Home'||e.key==='0'){reset();}else return;e.preventDefault();}
+function keyNavigation(e){if(!data?.rows)return;if(e.key==='ArrowLeft'){pan(-.25);}else if(e.key==='ArrowRight'){pan(.25);}else if(e.key==='+'||e.key==='='){zoom(.5);}else if(e.key==='-'||e.key==='−'){zoom(2);}else if(e.key==='Home'||e.key==='0'){reset();}else return;e.preventDefault();}

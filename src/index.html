@@ -17,6 +17,7 @@
       <div class="app-title"><h1>MFC2000 HMI Graphs Viewer</h1><small class="et-muted" data-i18n="appSubtitle">Перегляд архівів HMI · CSV · дата й час</small></div>
       <nav class="topbar-actions" data-i18n-aria="navigation">
         <button class="topbar-button" id="helpBtn" data-i18n-aria="help" data-i18n-title="help" aria-haspopup="dialog" aria-controls="help" type="button">?</button>
+        <a class="topbar-button author-tools" id="portal-home" href="https://roman-khoroshko-tech.github.io/" data-i18n-aria="portal" data-i18n-title="portal"><span aria-hidden="true">RK<span class="author-arrow">↗</span></span></a>
         <div class="language-picker">
           <button class="topbar-button language-button" id="languageBtn" type="button" aria-haspopup="menu" aria-expanded="false" aria-controls="languageMenu" data-i18n-aria="language" data-i18n-title="language">UK</button>
           <div id="languageMenu" class="language-menu" role="menu" data-i18n-aria="language" hidden>
@@ -28,24 +29,11 @@
         <button class="topbar-button theme-button" id="themeBtn" data-et-theme data-i18n-aria="theme" data-i18n-title="theme" aria-pressed="false" type="button"><span aria-hidden="true">◐</span></button>
       </nav>
     </header>
-    <section class="filebar et-panel et-row" data-i18n-aria="fileControls">
-      <button class="et-button et-button-primary" id="openBtn"><span aria-hidden="true">↥</span><span data-i18n="open">Відкрити CSV</span></button>
-      <span class="et-small et-muted" data-i18n="fileHint">CSV з колонкою Timestamp та числовими сигналами</span>
-      <span class="filebar-status et-status" data-tone="ready" data-i18n="local">Локально · без інтернету</span>
-    </section>
     <div id="error" class="et-notice main-error" data-tone="fault" role="alert" hidden></div>
-    <section id="welcome" class="welcome et-panel">
-      <div class="et-status" data-tone="ready" data-i18n="local">Локально · без інтернету</div>
-      <div class="welcome-icon" aria-hidden="true"><svg width="42" height="42" viewBox="0 0 32 32" fill="none"><path d="M16 22V5m0 0L10 11m6-6l6 6M6 21v6h20v-6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-      <h1 data-i18n="welcomeTitle">Відкрийте файл з HMI</h1>
-      <p class="et-muted welcome-description" data-i18n="welcomeDescription">Перетягніть CSV сюди або виберіть на комп’ютері. Графіки з датою й часом з’являться автоматично.</p>
-      <button class="et-button et-button-primary" id="chooseBtn" data-i18n="choose">Вибрати файл</button>
-      <p class="et-small et-muted" data-i18n="fileHint">CSV з колонкою Timestamp та числовими сигналами</p>
-      <div class="welcome-features et-small et-muted"><span data-i18n="featureTime">↔ Спільна шкала часу</span><span data-i18n="featureScale">⊕ Авто / ручний масштаб</span><span data-i18n="featureValues">⌖ Значення в точці</span></div>
-    </section>
-    <div id="workspace" class="workspace" hidden>
+    <div id="workspace" class="workspace">
       <aside class="sidebar et-panel">
         <div class="eyebrow" data-i18n="file">Відкритий файл</div><div id="fileName" class="file-name"></div><div id="fileMeta" class="file-meta et-muted"></div>
+        <button class="et-button small change-file" id="openBtn" data-i18n="open">Відкрити CSV</button>
         <div class="sidebar-section"><div class="side-heading"><h2 data-i18n="signals">Сигнали</h2><button id="allBtn" class="text-button" data-i18n="showAll">Показати всі</button></div><div id="signals" class="signals"></div></div>
         <div class="sidebar-section side-readings"><div class="eyebrow" data-i18n="cursorValues">Значення під курсором</div><div id="cursorTime" class="sidebar-time"></div><div id="readings"></div></div>
         <div class="sidebar-section side-help"><p class="et-small et-muted" data-i18n="sideHelp">Колесо — масштаб часу. Перетягування — прокрутка. Подвійний клік — весь період.</p><p class="et-small et-muted" data-i18n="sideYHelp">Зніміть «Автомасштаб Y», щоб зафіксувати вертикальну шкалу та задати власні межі.</p></div>

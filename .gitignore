@@ -1,5 +1,44 @@
+# Local dependencies and caches
 node_modules/
+.cache/
+
+# Scratch files, backups and verification output
 work/
+tmp/
+temp/
+coverage/
+test-results/
+playwright-report/
+*.log
+*.tmp
+*.temp
+*.bak
+*.orig
+*.swp
+*.swo
+*~
+
+# Local configuration and credentials
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+secrets/
+credentials/
+
+# Local HMI recordings and imported data
+data/
+imports/
+*.csv
+*.tsv
+
+# Operating system / editor workspace files
 .DS_Store
 Thumbs.db
 Desktop.ini
+.idea/
+*.code-workspace
+
+# Keep index.html and MFC2000-HMI-Graphs-Viewer.html tracked:
+# they are the distributable application and GitHub Pages entry point.

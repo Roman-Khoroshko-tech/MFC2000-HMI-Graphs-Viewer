@@ -4,6 +4,7 @@
   "private": true,
   "description": "Offline HMI CSV graph viewer with Ukrainian, Polish and English interfaces",
   "scripts": {
-    "build": "node build.cjs"
+    "build": "node build.cjs",
+    "check": "node build.cjs --check"
   }
 }

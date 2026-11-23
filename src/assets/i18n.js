@@ -1,6 +1,7 @@
 'use strict';
 const messages = {
  uk: {
+  noFile:'Файл не вибрано', emptyFileHint:'Відкрийте CSV з HMI',
   appSubtitle:'Перегляд архівів HMI · CSV · дата й час', fileControls:'Вибір файлу HMI',
   graphs:'Графіки', appTitle:'HMI · Графіки', skip:'До основного вмісту', portal:'Головний портал Engineering Tools', navigation:'Керування програмою', language:'Мова', theme:'Перемкнути світлу / темну тему', help:'Керування', open:'Відкрити CSV', local:'Локально · без інтернету',
   welcomeTitle:'Відкрийте файл з HMI', welcomeDescription:'Перетягніть CSV сюди або виберіть на комп’ютері. Графіки з датою й часом з’являться автоматично.', choose:'Вибрати файл', fileHint:'CSV з колонкою Timestamp та числовими сигналами', featureTime:'↔ Спільна шкала часу', featureScale:'⊕ Авто / ручний масштаб', featureValues:'⌖ Значення в точці',
@@ -14,6 +15,7 @@ const messages = {
   signalNames:{Frequency:'Частота','Motor Curr':'Струм двигуна','Motor Volt':'Напруга двигуна','Cells Temp':'Температура комірок','Trafo Temp':'Температура трансформатора','Grid Voltage':'Напруга мережі','Curr. line':'Струм лінії'}
  },
  pl: {
+  noFile:'Nie wybrano pliku', emptyFileHint:'Otwórz plik CSV z HMI',
   appSubtitle:'Przeglądanie archiwów HMI · CSV · data i godzina', fileControls:'Wybór pliku HMI',
   graphs:'Wykresy', appTitle:'HMI · Wykresy', skip:'Przejdź do treści', portal:'Portal główny Engineering Tools', navigation:'Sterowanie programem', language:'Język', theme:'Przełącz jasny / ciemny motyw', help:'Obsługa', open:'Otwórz CSV', local:'Lokalnie · bez internetu',
   welcomeTitle:'Otwórz plik z HMI', welcomeDescription:'Przeciągnij tutaj plik CSV lub wybierz go z urządzenia. Wykresy z datą i godziną pojawią się automatycznie.', choose:'Wybierz plik', fileHint:'CSV z kolumną Timestamp i sygnałami liczbowymi', featureTime:'↔ Wspólna oś czasu', featureScale:'⊕ Skala auto / ręczna', featureValues:'⌖ Wartości w punkcie',
@@ -27,6 +29,7 @@ const messages = {
   signalNames:{Frequency:'Częstotliwość','Motor Curr':'Prąd silnika','Motor Volt':'Napięcie silnika','Cells Temp':'Temperatura ogniw','Trafo Temp':'Temperatura transformatora','Grid Voltage':'Napięcie sieci','Curr. line':'Prąd linii'}
  },
  en: {
+  noFile:'No file selected', emptyFileHint:'Open an HMI CSV file',
   appSubtitle:'HMI recording viewer · CSV · date and time', fileControls:'HMI file selection',
   graphs:'Graphs', appTitle:'HMI · Graphs', skip:'Skip to content', portal:'Engineering Tools home portal', navigation:'Application controls', language:'Language', theme:'Switch light / dark theme', help:'Controls', open:'Open CSV', local:'Local · works offline',
   welcomeTitle:'Open an HMI file', welcomeDescription:'Drop a CSV here or choose it from your device. Graphs with dates and times will appear automatically.', choose:'Choose file', fileHint:'CSV with a Timestamp column and numeric signals', featureTime:'↔ Shared time axis', featureScale:'⊕ Auto / manual scale', featureValues:'⌖ Values at cursor',
