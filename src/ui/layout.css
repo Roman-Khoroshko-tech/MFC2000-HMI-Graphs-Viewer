@@ -1,0 +1,26 @@
+*, *::before, *::after { box-sizing: border-box; }
+body.et-page {
+  margin: 0;
+  background: var(--et-bg);
+  color: var(--et-text);
+  font: var(--et-body)/1.55 var(--et-font);
+}
+.et-page :focus-visible { outline: 2px solid var(--et-accent); outline-offset: 3px; }
+.et-page :where(h1, h2, h3, p) { margin: 0; }
+.et-page h1 { font-size: var(--et-title); line-height: 1.15; letter-spacing: -.035em; }
+.et-page h2 { font-size: var(--et-section); line-height: 1.3; letter-spacing: -.02em; }
+.et-page h3 { font-size: var(--et-body); }
+.et-shell { width: min(100%, var(--et-width)); margin-inline: auto; padding-inline: var(--et-gutter); }
+.et-header { background: var(--et-surface); border-bottom: 1px solid var(--et-border); }
+.et-header-inner { min-height: 4.5rem; padding-block: var(--et-sm); justify-content: space-between; }
+.et-main { padding-block: var(--et-xl); }
+.et-stack { display: grid; gap: var(--et-md); min-width: 0; }
+.et-stack-lg { gap: var(--et-lg); }
+.et-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--et-sm); }
+.et-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 19rem), 1fr)); gap: var(--et-md); }
+.et-grid > * { min-width: 0; }
+.et-intro { display: grid; gap: var(--et-sm); }
+.et-intro p { max-width: 65ch; }
+.et-skip:not(:focus) { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+.et-skip:focus { position: fixed; inset: var(--et-sm) auto auto var(--et-sm); z-index: 5; }
+

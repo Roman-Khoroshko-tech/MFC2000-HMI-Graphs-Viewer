@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="uk">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MFC2000 HMI Graphs Viewer</title>
+  <script src="ui/theme.js"></script>
+  <link rel="stylesheet" href="ui/tokens.css">
+  <link rel="stylesheet" href="ui/layout.css">
+  <link rel="stylesheet" href="ui/components.css">
+  <link rel="stylesheet" href="assets/app.css">
+</head>
+<body class="et-page">
+  <a class="et-button et-skip" href="#main" data-i18n="skip">До основного вмісту</a>
+  <main id="main" tabindex="-1" class="et-shell et-main">
+    <header class="app-heading">
+      <div class="app-title"><h1>MFC2000 HMI Graphs Viewer</h1><small class="et-muted" data-i18n="appSubtitle">Перегляд архівів HMI · CSV · дата й час</small></div>
+      <nav class="topbar-actions" data-i18n-aria="navigation">
+        <button class="topbar-button" id="helpBtn" data-i18n-aria="help" data-i18n-title="help" aria-haspopup="dialog" aria-controls="help" type="button">?</button>
+        <div class="language-picker">
+          <button class="topbar-button language-button" id="languageBtn" type="button" aria-haspopup="menu" aria-expanded="false" aria-controls="languageMenu" data-i18n-aria="language" data-i18n-title="language">UK</button>
+          <div id="languageMenu" class="language-menu" role="menu" data-i18n-aria="language" hidden>
+            <button type="button" role="menuitemradio" data-language="uk" aria-checked="true" tabindex="-1"><span>UK</span> Українська</button>
+            <button type="button" role="menuitemradio" data-language="pl" aria-checked="false" tabindex="-1"><span>PL</span> Polski</button>
+            <button type="button" role="menuitemradio" data-language="en" aria-checked="false" tabindex="-1"><span>EN</span> English</button>
+          </div>
+        </div>
+        <button class="topbar-button theme-button" id="themeBtn" data-et-theme data-i18n-aria="theme" data-i18n-title="theme" aria-pressed="false" type="button"><span aria-hidden="true">◐</span></button>
+      </nav>
+    </header>
+    <section class="filebar et-panel et-row" data-i18n-aria="fileControls">
+      <button class="et-button et-button-primary" id="openBtn"><span aria-hidden="true">↥</span><span data-i18n="open">Відкрити CSV</span></button>
+      <span class="et-small et-muted" data-i18n="fileHint">CSV з колонкою Timestamp та числовими сигналами</span>
+      <span class="filebar-status et-status" data-tone="ready" data-i18n="local">Локально · без інтернету</span>
+    </section>
+    <div id="error" class="et-notice main-error" data-tone="fault" role="alert" hidden></div>
+    <section id="welcome" class="welcome et-panel">
+      <div class="et-status" data-tone="ready" data-i18n="local">Локально · без інтернету</div>
+      <div class="welcome-icon" aria-hidden="true"><svg width="42" height="42" viewBox="0 0 32 32" fill="none"><path d="M16 22V5m0 0L10 11m6-6l6 6M6 21v6h20v-6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <h1 data-i18n="welcomeTitle">Відкрийте файл з HMI</h1>
+      <p class="et-muted welcome-description" data-i18n="welcomeDescription">Перетягніть CSV сюди або виберіть на комп’ютері. Графіки з датою й часом з’являться автоматично.</p>
+      <button class="et-button et-button-primary" id="chooseBtn" data-i18n="choose">Вибрати файл</button>
+      <p class="et-small et-muted" data-i18n="fileHint">CSV з колонкою Timestamp та числовими сигналами</p>
+      <div class="welcome-features et-small et-muted"><span data-i18n="featureTime">↔ Спільна шкала часу</span><span data-i18n="featureScale">⊕ Авто / ручний масштаб</span><span data-i18n="featureValues">⌖ Значення в точці</span></div>
+    </section>
+    <div id="workspace" class="workspace" hidden>
+      <aside class="sidebar et-panel">
+        <div class="eyebrow" data-i18n="file">Відкритий файл</div><div id="fileName" class="file-name"></div><div id="fileMeta" class="file-meta et-muted"></div>
+        <div class="sidebar-section"><div class="side-heading"><h2 data-i18n="signals">Сигнали</h2><button id="allBtn" class="text-button" data-i18n="showAll">Показати всі</button></div><div id="signals" class="signals"></div></div>
+        <div class="sidebar-section side-readings"><div class="eyebrow" data-i18n="cursorValues">Значення під курсором</div><div id="cursorTime" class="sidebar-time"></div><div id="readings"></div></div>
+        <div class="sidebar-section side-help"><p class="et-small et-muted" data-i18n="sideHelp">Колесо — масштаб часу. Перетягування — прокрутка. Подвійний клік — весь період.</p><p class="et-small et-muted" data-i18n="sideYHelp">Зніміть «Автомасштаб Y», щоб зафіксувати вертикальну шкалу та задати власні межі.</p></div>
+        <span class="et-status sidebar-status" data-tone="ready" data-i18n="local">Локально · без інтернету</span>
+      </aside>
+      <section class="content" data-i18n-aria="signalGraphs">
+        <div id="warnings" class="et-notice" data-tone="warning" role="status" hidden></div>
+        <div class="range-card et-panel">
+          <div class="range-top"><div><div class="eyebrow" data-i18n="timeRange">Часовий діапазон</div><div id="rangeLabel" class="range-label"></div></div>
+            <div class="toolbar et-row"><button class="et-button small preset" data-span="3600000" data-i18n="oneHour">1 год</button><button class="et-button small preset" data-span="21600000" data-i18n="sixHours">6 год</button><button class="et-button small preset" data-span="86400000" data-i18n="oneDay">1 доба</button><span class="divider"></span><button id="prevBtn" class="et-button et-icon" data-i18n-title="previous" data-i18n-aria="previous">‹</button><button id="zoomInBtn" class="et-button et-icon" data-i18n-title="zoomIn" data-i18n-aria="zoomIn">+</button><button id="zoomOutBtn" class="et-button et-icon" data-i18n-title="zoomOut" data-i18n-aria="zoomOut">−</button><button id="nextBtn" class="et-button et-icon" data-i18n-title="next" data-i18n-aria="next">›</button><button id="resetBtn" class="et-button small" data-i18n="fullRange">Весь період</button></div>
+          </div>
+          <canvas id="overview" class="overview" tabindex="0" role="img" data-i18n-aria="overviewAria"></canvas>
+          <form class="date-inputs et-row" id="rangeForm"><label class="et-field"><span data-i18n="from">Від</span><input type="datetime-local" id="fromInput" step="1" required data-i18n-aria="rangeStart"></label><label class="et-field"><span data-i18n="to">До</span><input type="datetime-local" id="toInput" step="1" required data-i18n-aria="rangeEnd"></label><button class="et-button small" type="submit" data-i18n="show">Показати</button><span class="range-note et-muted et-small" data-i18n="sharedTime">Спільний час для всіх графіків</span></form>
+        </div>
+        <div id="charts"></div><div id="noSignals" class="et-panel charts-empty et-muted" data-i18n="noSignals" hidden>Виберіть сигнали, щоб показати графіки.</div>
+      </section>
+    </div>
+    <footer class="footer et-small et-muted"><span>MFC2000 HMI Graphs Viewer · 2.1</span><span data-i18n="footer">Дата й час — як у файлі HMI. Дані залишаються на вашому пристрої.</span></footer>
+  </main>
+  <input id="fileInput" type="file" accept=".csv,.txt,text/csv,text/plain" hidden>
+  <div class="loading" id="loading" hidden><div class="et-panel loading-box" role="status" aria-live="polite"><div class="spinner"></div><strong data-i18n="loading">Читаю файл…</strong><p id="loadingText" class="et-small et-muted"></p></div></div>
+  <div id="dragOverlay" class="drag-overlay" data-i18n="drop" hidden>Відпустіть CSV, щоб відкрити</div>
+  <dialog id="help" aria-labelledby="helpTitle"><h2 id="helpTitle" data-i18n="helpTitle">Як переглядати графіки</h2><ul><li data-i18n="helpTime"></li><li data-i18n="helpPan"></li><li data-i18n="helpCursor"></li><li data-i18n="helpY"></li><li data-i18n="helpManual"></li><li data-i18n="helpDate"></li><li data-i18n="helpOverview"></li><li data-i18n="helpKeys"></li></ul><p class="et-small et-muted" data-i18n="helpPrivacy"></p><div class="dialog-footer"><button class="et-button et-button-primary" id="closeHelp" data-i18n="understood">Зрозуміло</button></div></dialog>
+  <script src="assets/i18n.js"></script>
+  <script src="assets/worker.js"></script>
+  <script src="assets/data-utils.js"></script>
+  <script src="assets/app.js"></script>
+</body>
+</html>

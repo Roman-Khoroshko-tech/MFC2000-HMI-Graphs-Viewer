@@ -1,0 +1,9 @@
+{
+  "name": "mfc2000-hmi-graphs-viewer",
+  "version": "2.1.0",
+  "private": true,
+  "description": "Offline HMI CSV graph viewer with Ukrainian, Polish and English interfaces",
+  "scripts": {
+    "build": "node build.cjs"
+  }
+}

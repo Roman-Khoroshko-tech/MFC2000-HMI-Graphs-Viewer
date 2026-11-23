@@ -1,0 +1,641 @@
+<!doctype html>
+<html lang="uk">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MFC2000 HMI Graphs Viewer</title>
+  <script>
+(() => {
+  const root = document.documentElement;
+  const key = 'rk-theme';
+  const preference = matchMedia('(prefers-color-scheme: dark)');
+  let selected;
+
+  try {
+    selected = localStorage.getItem(key);
+  } catch {
+    // Storage can be disabled, particularly for local files.
+  }
+
+  function render() {
+    const theme = ['light', 'dark'].includes(selected) ? selected : preference.matches ? 'dark' : 'light';
+    root.dataset.theme = theme;
+    document.querySelectorAll('[data-et-theme]').forEach(button => {
+      button.setAttribute('aria-pressed', String(theme === 'dark'));
+    });
+  }
+
+  render();
+  document.addEventListener('DOMContentLoaded', render);
+  preference.addEventListener('change', render);
+  window.addEventListener('storage', event => {
+    if (event.key === key || event.key === null) {
+      selected = event.newValue;
+      render();
+    }
+  });
+
+  document.addEventListener('click', event => {
+    if (!event.target.closest('[data-et-theme]')) return;
+    selected = root.dataset.theme === 'dark' ? 'light' : 'dark';
+    try {
+      localStorage.setItem(key, selected);
+    } catch {
+      // The current page still retains the selection.
+    }
+    render();
+  });
+})();
+
+
+</script>
+  <style>
+:root {
+  color-scheme: light;
+  --et-bg: #f6f8f8;
+  --et-surface: #fff;
+  --et-text: #172b32;
+  --et-muted: #53666e;
+  --et-border: #dde5e7;
+  --et-control-border: #829298;
+  --et-accent: #157568;
+  --et-on-accent: #fff;
+  --et-soft: #e7f2ef;
+  --et-shadow: 0 8px 26px #183e3310;
+  --et-ready: #157568;
+  --et-ready-bg: #e7f2ef;
+  --et-running: #245c9b;
+  --et-running-bg: #eaf2ff;
+  --et-warning: #80540e;
+  --et-warning-bg: #fff4de;
+  --et-fault: #a5303d;
+  --et-fault-bg: #fbebed;
+  --et-offline: #53666e;
+  --et-offline-bg: #edf1f2;
+  --et-font: Inter, "Segoe UI", Arial, sans-serif;
+  --et-mono: Consolas, monospace;
+  --et-small: .8125rem;
+  --et-body: .9375rem;
+  --et-section: 1.25rem;
+  --et-title: clamp(1.75rem, 4vw, 2.625rem);
+  --et-weight: 650;
+  --et-xs: .375rem;
+  --et-sm: .625rem;
+  --et-md: 1rem;
+  --et-lg: 1.5rem;
+  --et-xl: 2.5rem;
+  --et-gutter: clamp(1rem, 4vw, 2.5rem);
+  --et-radius: .5rem;
+  --et-panel-radius: .75rem;
+  --et-control: 2.5rem;
+  --et-width: 75rem;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --et-bg: #111a1e;
+  --et-surface: #18242a;
+  --et-text: #e4edef;
+  --et-muted: #a0b2b9;
+  --et-border: #2d3d44;
+  --et-control-border: #6a8089;
+  --et-accent: #62c9b3;
+  --et-on-accent: #10241f;
+  --et-soft: #213d38;
+  --et-shadow: 0 8px 26px #0002;
+  --et-ready: #62c9b3;
+  --et-ready-bg: #213d38;
+  --et-running: #a8ccff;
+  --et-running-bg: #22374f;
+  --et-warning: #f1c47b;
+  --et-warning-bg: #382f24;
+  --et-fault: #ffafb9;
+  --et-fault-bg: #3b2630;
+  --et-offline: #a0b2b9;
+  --et-offline-bg: #26353b;
+}
+
+
+</style>
+  <style>
+*, *::before, *::after { box-sizing: border-box; }
+body.et-page {
+  margin: 0;
+  background: var(--et-bg);
+  color: var(--et-text);
+  font: var(--et-body)/1.55 var(--et-font);
+}
+.et-page :focus-visible { outline: 2px solid var(--et-accent); outline-offset: 3px; }
+.et-page :where(h1, h2, h3, p) { margin: 0; }
+.et-page h1 { font-size: var(--et-title); line-height: 1.15; letter-spacing: -.035em; }
+.et-page h2 { font-size: var(--et-section); line-height: 1.3; letter-spacing: -.02em; }
+.et-page h3 { font-size: var(--et-body); }
+.et-shell { width: min(100%, var(--et-width)); margin-inline: auto; padding-inline: var(--et-gutter); }
+.et-header { background: var(--et-surface); border-bottom: 1px solid var(--et-border); }
+.et-header-inner { min-height: 4.5rem; padding-block: var(--et-sm); justify-content: space-between; }
+.et-main { padding-block: var(--et-xl); }
+.et-stack { display: grid; gap: var(--et-md); min-width: 0; }
+.et-stack-lg { gap: var(--et-lg); }
+.et-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--et-sm); }
+.et-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 19rem), 1fr)); gap: var(--et-md); }
+.et-grid > * { min-width: 0; }
+.et-intro { display: grid; gap: var(--et-sm); }
+.et-intro p { max-width: 65ch; }
+.et-skip:not(:focus) { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+.et-skip:focus { position: fixed; inset: var(--et-sm) auto auto var(--et-sm); z-index: 5; }
+
+
+</style>
+  <style>
+.et-muted { color: var(--et-muted); }
+.et-small { font-size: var(--et-small); }
+.et-link { color: var(--et-accent); text-underline-offset: .2em; font-weight: var(--et-weight); }
+.et-brand { font-weight: var(--et-weight); }
+.et-mark {
+  display: inline-grid;
+  place-items: center;
+  width: var(--et-control);
+  height: var(--et-control);
+  border-radius: var(--et-radius);
+  background: var(--et-accent);
+  color: var(--et-on-accent);
+  text-decoration: none;
+  font-weight: 750;
+}
+.et-panel {
+  padding: clamp(var(--et-md), 2.5vw, var(--et-lg));
+  border: 1px solid var(--et-border);
+  border-radius: var(--et-panel-radius);
+  background: var(--et-surface);
+  box-shadow: var(--et-shadow);
+}
+.et-card { background: var(--et-bg); box-shadow: none; }
+.et-nav { gap: var(--et-md); font-size: var(--et-small); }
+.et-button, .et-field :is(input, select) {
+  min-height: var(--et-control);
+  min-width: 0;
+  padding: var(--et-xs) var(--et-sm);
+  border: 1px solid var(--et-control-border);
+  border-radius: var(--et-radius);
+  background: var(--et-surface);
+  color: var(--et-text);
+  font: inherit;
+}
+.et-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--et-xs);
+  cursor: pointer;
+  text-decoration: none;
+  font-weight: var(--et-weight);
+}
+.et-button:not(:disabled):hover { background: var(--et-soft); border-color: var(--et-accent); }
+.et-button:not(:disabled):active { box-shadow: inset 0 0 0 2px currentColor; }
+.et-button-primary, .et-button-primary:not(:disabled):hover {
+  background: var(--et-accent);
+  border-color: var(--et-accent);
+  color: var(--et-on-accent);
+}
+.et-button-primary:not(:disabled):hover { background: color-mix(in srgb, var(--et-accent), var(--et-on-accent) 8%); }
+.et-button:disabled { opacity: .55; cursor: default; }
+.et-icon { width: var(--et-control); padding: 0; font-size: 1.125rem; }
+.et-field { display: grid; gap: var(--et-xs); min-width: 0; font-size: var(--et-small); font-weight: var(--et-weight); }
+.et-field :is(input, select) { width: 100%; font-weight: 400; font-size: 1rem; }
+.et-field-row > .et-field { flex: 1 1 8rem; }
+.et-check { display: inline-flex; align-items: center; gap: var(--et-sm); min-height: var(--et-control); cursor: pointer; }
+.et-check input { accent-color: var(--et-accent); margin: 0; }
+.et-switch input {
+  appearance: none;
+  display: grid;
+  align-items: center;
+  width: 2.5rem;
+  height: 1.375rem;
+  padding: 2px;
+  border: 1px solid var(--et-control-border);
+  border-radius: 2rem;
+  background: var(--et-surface);
+}
+.et-switch input::before { content: ""; width: .9rem; height: .9rem; border-radius: 50%; background: var(--et-muted); }
+.et-switch input:checked { background: var(--et-accent); border-color: var(--et-accent); }
+.et-switch input:checked::before { justify-self: end; background: var(--et-on-accent); }
+.et-status, .et-notice { color: var(--et-tone, var(--et-offline)); background: var(--et-tone-bg, var(--et-offline-bg)); }
+[data-tone="ready"] { --et-tone: var(--et-ready); --et-tone-bg: var(--et-ready-bg); }
+[data-tone="running"] { --et-tone: var(--et-running); --et-tone-bg: var(--et-running-bg); }
+[data-tone="warning"] { --et-tone: var(--et-warning); --et-tone-bg: var(--et-warning-bg); }
+[data-tone="fault"] { --et-tone: var(--et-fault); --et-tone-bg: var(--et-fault-bg); }
+.et-status {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--et-xs);
+  width: fit-content;
+  padding: .25rem var(--et-sm);
+  border-radius: var(--et-radius);
+  font-size: var(--et-small);
+  font-weight: var(--et-weight);
+}
+.et-status::before { content: ""; width: .45rem; height: .45rem; border-radius: 50%; background: currentColor; }
+.et-notice { padding: var(--et-sm) var(--et-md); border-inline-start: 3px solid currentColor; border-radius: var(--et-radius); }
+.et-value { font: var(--et-weight) clamp(1.5rem, 4vw, 2rem)/1.25 var(--et-mono); font-variant-numeric: tabular-nums; }
+.et-value small { color: var(--et-muted); font: var(--et-body) var(--et-font); }
+.et-table-wrap { overflow: auto; }
+.et-table { width: 100%; border-collapse: collapse; font-size: var(--et-small); }
+.et-table :is(th, td) { text-align: start; vertical-align: top; padding: var(--et-sm); border-bottom: 1px solid var(--et-border); overflow-wrap: anywhere; }
+.et-table thead { background: var(--et-bg); color: var(--et-muted); }
+.et-table caption { text-align: start; padding-block-end: var(--et-sm); font-weight: var(--et-weight); }
+.et-number { font-family: var(--et-mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.et-tooltip { position: relative; display: inline-flex; }
+.et-tooltip [role="tooltip"] {
+  position: absolute;
+  z-index: 2;
+  inset: calc(100% - 1px) auto auto 0;
+  width: max-content;
+  max-width: min(13rem, 65vw);
+  padding: var(--et-sm);
+  border: 1px solid var(--et-border);
+  border-radius: var(--et-radius);
+  background: var(--et-surface);
+  box-shadow: var(--et-shadow);
+  font-size: var(--et-small);
+  opacity: 0;
+  pointer-events: none;
+}
+.et-tooltip:not([data-dismissed]):is(:hover, :focus-within) [role="tooltip"] { opacity: 1; pointer-events: auto; }
+@media (forced-colors: active) {
+  .et-switch input { appearance: auto; width: auto; height: auto; padding: 0; }
+  .et-switch input::before { content: none; }
+}
+
+
+</style>
+  <style>
+:root{--et-width:105rem;--hmi-grid:var(--et-border);--hmi-cursor:var(--et-muted)}
+[hidden]{display:none!important}button,input,select{font:inherit}button{touch-action:manipulation}.sr-only{position:absolute;width:1px;height:1px;padding:0;overflow:hidden;clip-path:inset(50%);white-space:nowrap}.brand-title{font-size:1.05rem;letter-spacing:-.025em}.brand-separator{font-weight:400;color:var(--et-control-border);margin:0 .35rem}.brand-caption{display:block;font-size:.65rem;font-weight:400;color:var(--et-muted)}.et-header .et-nav{gap:.5rem}.language-control select{font-size:.8125rem;min-width:7.8rem;width:auto}.et-main{padding-top:1.5rem}.et-button.small{font-size:.8125rem;min-height:2.25rem}.eyebrow{text-transform:uppercase;letter-spacing:.12em;font-size:.625rem;font-weight:700;color:var(--et-muted)}
+.welcome{max-width:50rem;margin:6vh auto;text-align:center;display:flex;align-items:center;flex-direction:column;gap:1.1rem;padding:3rem 2rem}.welcome-icon{color:var(--et-accent);background:var(--et-soft);width:5rem;height:5rem;display:grid;place-items:center;border-radius:var(--et-panel-radius);margin:.5rem}.welcome-description{max-width:33rem}.welcome h1{font-size:clamp(1.8rem,4vw,2.5rem)}.welcome-features{display:flex;flex-wrap:wrap;justify-content:center;gap:1.5rem;padding-top:1.2rem;border-top:1px solid var(--et-border);margin-top:.5rem;width:100%}
+.workspace{display:grid;grid-template-columns:15.5rem minmax(0,1fr);gap:1.25rem}.sidebar{align-self:start;position:sticky;top:1rem;padding:1.15rem}.file-name{font-weight:650;font-size:1.05rem;overflow-wrap:anywhere;margin:.4rem 0}.file-meta{font-size:.75rem;margin-bottom:1rem}.sidebar-section{padding:1rem 0;border-top:1px solid var(--et-border)}.side-heading{display:flex;align-items:center;justify-content:space-between;gap:.4rem;margin-bottom:.5rem}.side-heading h2{font-size:.875rem}.text-button{border:0;background:transparent;color:var(--et-accent);font-size:.75rem;cursor:pointer;padding:.25rem;min-height:2rem;font-weight:600}.text-button:hover{text-decoration:underline}.signal{display:flex;align-items:flex-start;gap:.5rem;padding:.5rem 0;min-height:2.5rem;cursor:pointer}.signal input{width:1rem;height:1rem;margin:.2rem 0 0;accent-color:var(--et-accent);flex:none}.signal-color{width:.45rem;height:.45rem;flex:none;border-radius:50%;margin-top:.5rem}.signal-text{min-width:0}.signal-label{font-weight:550;font-size:.8rem;display:block}.signal-source{display:block;font-size:.625rem;color:var(--et-muted);overflow-wrap:anywhere}.sidebar-time{font-size:.75rem;font-weight:650;font-variant-numeric:tabular-nums;margin:.6rem 0}.reading{display:flex;justify-content:space-between;align-items:baseline;gap:.5rem;padding:.25rem 0;font-size:.7rem}.reading span{color:var(--et-muted)}.reading strong{font-family:var(--et-mono);font-size:.72rem;font-weight:400;white-space:nowrap}.side-help p+p{margin-top:.8rem}.sidebar-status{font-size:.7rem}
+.content{min-width:0}.range-card{padding:1rem 1.15rem;margin-bottom:1.2rem}.range-top{display:flex;flex-wrap:wrap;justify-content:space-between;gap:.75rem;align-items:center}.range-label{font-size:.8rem;font-weight:650;font-variant-numeric:tabular-nums;margin-top:.25rem}.toolbar{gap:.3rem}.toolbar .et-icon{width:2.25rem;min-height:2.25rem}.divider{height:1.5rem;width:1px;background:var(--et-border);margin:0 .2rem}.preset[aria-pressed=true]{background:var(--et-soft);border-color:var(--et-accent);color:var(--et-accent)}.overview{width:100%;height:66px;display:block;margin:.8rem 0;touch-action:none;cursor:ew-resize}.date-inputs{gap:.65rem;align-items:end}.date-inputs .et-field{display:flex;align-items:center;gap:.4rem;font-size:.75rem}.date-inputs input{font-size:.75rem;padding:.25rem .4rem;min-height:2.25rem;width:12.5rem}.date-inputs .range-note{margin-left:auto;align-self:center;font-size:.7rem}.chart-card{padding:0;margin-bottom:1rem;overflow:hidden}.chart-heading{display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:1rem 1.15rem .5rem}.chart-title{display:flex;align-items:center;gap:.6rem;min-width:0}.chart-title i{display:block;width:.5rem;height:.5rem;border-radius:50%;flex:none}.chart-title h2{font-size:.9rem;overflow-wrap:anywhere}.chart-heading output{font-family:var(--et-mono);font-size:.8rem;color:var(--et-muted);white-space:nowrap}.y-controls{padding:0 1.15rem .5rem;display:flex;flex-wrap:wrap;gap:.5rem .75rem;align-items:center}.y-controls .et-check{font-size:.75rem;min-height:2.15rem;font-weight:600;gap:.45rem}.y-controls .et-check input{width:1rem;height:1rem}.y-fields{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center}.y-fields .et-field{display:flex;gap:.4rem;align-items:center;font-size:.7rem}.y-fields input{width:6.2rem;min-height:2.15rem;font: .75rem var(--et-mono);padding:.3rem .4rem}.y-fields input:disabled{background:var(--et-bg);color:var(--et-muted);border-color:var(--et-border)}.y-fields .et-button{min-height:2.15rem;font-size:.7rem;padding:.3rem .5rem}.y-mode{font-size:.7rem;color:var(--et-muted);margin-left:auto}.y-error{padding:.4rem 1.15rem .7rem;color:var(--et-fault);font-size:.75rem}.chart-canvas{display:block;width:100%;height:230px;touch-action:pan-y;cursor:crosshair}.charts-empty{text-align:center;padding:3rem 1rem}.footer{display:flex;flex-wrap:wrap;justify-content:center;gap:.5rem 1rem;margin-top:1.5rem;font-size:.7rem}.main-error,#warnings{margin-bottom:1rem}.loading{position:fixed;inset:0;background:color-mix(in srgb,var(--et-bg) 90%,transparent);z-index:10;display:grid;place-items:center;backdrop-filter:blur(3px)}.loading-box{min-width:17rem;max-width:90vw;text-align:center}.loading-box p{margin-top:.5rem}.spinner{width:2rem;height:2rem;border:3px solid var(--et-border);border-top-color:var(--et-accent);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 1rem}@keyframes spin{to{transform:rotate(360deg)}}.drag-overlay{position:fixed;inset:.5rem;z-index:20;pointer-events:none;display:grid;place-items:center;text-align:center;border:3px dashed var(--et-accent);border-radius:1rem;background:color-mix(in srgb,var(--et-surface) 95%,transparent);color:var(--et-accent);font-size:1.5rem;font-weight:650}dialog{width:min(36rem,calc(100% - 2rem));max-height:85vh;overflow:auto;padding:1.5rem;color:var(--et-text);background:var(--et-surface);border:1px solid var(--et-border);border-radius:var(--et-panel-radius);box-shadow:var(--et-shadow)}dialog::backdrop{background:#0b161b88}dialog h2{font-size:1.25rem}dialog ul{padding-left:1.25rem;font-size:.875rem}dialog li{margin:.75rem 0}.dialog-footer{display:flex;justify-content:flex-end;margin-top:1.25rem}
+@media(max-width:1100px){.workspace{grid-template-columns:13rem minmax(0,1fr)}.range-note{display:none}.y-mode{display:none}.sidebar{padding:1rem}}
+@media(max-width:760px){.workspace{display:block}.sidebar{position:static;margin-bottom:1rem}.signals{display:grid;grid-template-columns:1fr 1fr;gap:0 1rem}.signal-source,.side-help,.side-readings,.sidebar-status{display:none}.sidebar-section{padding:.5rem 0}.sidebar-section:last-of-type{border:0;padding:0}.file-meta{margin-bottom:.5rem}.et-header-inner{gap:.75rem}.et-header .et-nav{gap:.35rem}.brand-caption{font-size:.55rem}.et-header .et-button{font-size:.75rem;min-height:2.5rem}.et-header .et-nav{width:100%;justify-content:flex-end}.language-control{margin-right:auto}.language-control select{min-height:2.5rem}.range-card{padding:1rem}.y-controls{padding:0 1rem .5rem}.chart-heading{padding:1rem 1rem .5rem}.chart-canvas{height:210px}.date-inputs{align-items:start}.date-inputs .et-field{flex-wrap:wrap;max-width:100%;gap:.35rem}.date-inputs input{width:12rem;max-width:100%}.chart-title h2{font-size:.8rem}.chart-heading output{font-size:.7rem}.footer{justify-content:flex-start}}
+@media(max-width:380px){.signals{grid-template-columns:1fr}.y-fields input{width:5.3rem}.y-controls{gap:.35rem}.y-fields{gap:.3rem}.y-fields .et-field{gap:.25rem}.chart-heading{gap:.4rem}.welcome{padding:2rem 1rem}.welcome-features{gap:.75rem}.chart-title{gap:.4rem}}
+@media(prefers-reduced-motion:reduce){.spinner{animation:none}}
+
+/* Application chrome and control treatment follow the supplied RS Monitor HTML. */
+:root{--et-width:1440px;--et-gutter:clamp(14px,3vw,40px);--et-control:36px;--et-control-border:var(--et-border);--et-radius:7px;--et-panel-radius:12px;--et-body:14px;--et-title:clamp(22px,3vw,31px);--et-muted:#65777e}
+:root[data-theme=dark]{--et-muted:#a0b2b9}
+body.et-page{font:14px/1.5 Inter,"Segoe UI",Arial,sans-serif}
+.et-main{padding-top:20px;padding-bottom:36px}
+.app-heading{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:14px;margin-bottom:14px}
+.app-title{min-width:0}.app-title h1{font-size:clamp(22px,3vw,31px);line-height:1.2;letter-spacing:-.035em;overflow-wrap:anywhere}.app-title small{display:block;font-size:13px;margin-top:2px}
+.topbar-actions{display:flex;align-items:center;flex-wrap:nowrap;gap:clamp(6px,1vw,10px)}
+.topbar-button{display:inline-grid;place-items:center;width:38px;height:38px;padding:0;background:var(--et-bg);border:1px solid var(--et-border);border-radius:7px;color:var(--et-text);font:650 18px/1 Inter,"Segoe UI",Arial,sans-serif;cursor:pointer;text-decoration:none}
+.topbar-button:hover{border-color:var(--et-accent)}.theme-button{font-size:21px}.language-button{font-size:12px;letter-spacing:.02em}.language-button[aria-expanded=true]{border-color:var(--et-accent);background:var(--et-soft);color:var(--et-accent)}
+.language-picker{position:relative}.language-menu{position:absolute;top:calc(100% + 7px);right:0;z-index:6;width:174px;padding:5px;background:var(--et-surface);border:1px solid var(--et-border);border-radius:7px;box-shadow:var(--et-shadow)}
+.language-menu button{display:flex;align-items:center;gap:10px;width:100%;min-height:38px;padding:7px 10px;border:1px solid transparent;border-radius:5px;background:transparent;color:var(--et-text);font:14px/1.5 var(--et-font);text-align:left;cursor:pointer}.language-menu button span{font-size:11px;color:var(--et-muted);font-weight:650}.language-menu button:hover,.language-menu button:focus-visible{background:var(--et-bg);border-color:var(--et-accent)}.language-menu button[aria-checked=true]{background:var(--et-soft);color:var(--et-accent);font-weight:650}
+.filebar{padding:14px;margin:15px 0;gap:10px}.filebar-status{margin-left:auto;background:transparent;padding:0;font-weight:650;font-size:12px}
+.et-button{background:var(--et-bg);font-weight:600;padding:7px 10px;min-height:36px;font-size:14px;border-color:var(--et-border)}.et-button.et-button-primary{background:var(--et-accent);color:var(--et-on-accent);border-color:transparent}.et-button:not(:disabled):hover{border-color:var(--et-accent)}.et-button:not(:disabled):active{box-shadow:none}
+.et-field :is(input,select){background:var(--et-bg);border-color:var(--et-border);border-radius:7px}.et-panel{padding:14px}.workspace{gap:14px;grid-template-columns:245px minmax(0,1fr)}.range-card{padding:14px;margin-bottom:14px}.chart-card{padding:0}.chart-canvas{background:var(--et-bg);border-top:1px solid var(--et-border);height:clamp(230px,30vh,340px)}.chart-heading{padding:12px 14px 6px}.chart-title h2{font-size:14px}.y-controls{padding:0 14px 10px}.y-error{padding:0 14px 10px}.sidebar{padding:14px}.welcome{padding:36px 24px;gap:16px;margin:30px auto}.welcome h1{font-size:clamp(22px,3vw,31px)}
+@media(max-width:1100px){.workspace{grid-template-columns:210px minmax(0,1fr)}}
+@media(max-width:760px){.workspace{display:block}.app-heading{align-items:start}.app-title small{font-size:12px}.filebar-status{margin-left:0}.filebar>.et-muted{flex:1 1 180px}.chart-canvas{height:230px}.sidebar{padding:14px}}
+@media(max-width:570px){.app-heading{grid-template-columns:minmax(0,1fr);gap:10px}.topbar-actions{justify-self:end}.app-title h1{font-size:24px}.app-heading .topbar-button{width:38px;height:38px}.welcome{padding:26px 16px;margin:20px auto}}
+
+</style>
+</head>
+<body class="et-page">
+  <a class="et-button et-skip" href="#main" data-i18n="skip">До основного вмісту</a>
+  <main id="main" tabindex="-1" class="et-shell et-main">
+    <header class="app-heading">
+      <div class="app-title"><h1>MFC2000 HMI Graphs Viewer</h1><small class="et-muted" data-i18n="appSubtitle">Перегляд архівів HMI · CSV · дата й час</small></div>
+      <nav class="topbar-actions" data-i18n-aria="navigation">
+        <button class="topbar-button" id="helpBtn" data-i18n-aria="help" data-i18n-title="help" aria-haspopup="dialog" aria-controls="help" type="button">?</button>
+        <div class="language-picker">
+          <button class="topbar-button language-button" id="languageBtn" type="button" aria-haspopup="menu" aria-expanded="false" aria-controls="languageMenu" data-i18n-aria="language" data-i18n-title="language">UK</button>
+          <div id="languageMenu" class="language-menu" role="menu" data-i18n-aria="language" hidden>
+            <button type="button" role="menuitemradio" data-language="uk" aria-checked="true" tabindex="-1"><span>UK</span> Українська</button>
+            <button type="button" role="menuitemradio" data-language="pl" aria-checked="false" tabindex="-1"><span>PL</span> Polski</button>
+            <button type="button" role="menuitemradio" data-language="en" aria-checked="false" tabindex="-1"><span>EN</span> English</button>
+          </div>
+        </div>
+        <button class="topbar-button theme-button" id="themeBtn" data-et-theme data-i18n-aria="theme" data-i18n-title="theme" aria-pressed="false" type="button"><span aria-hidden="true">◐</span></button>
+      </nav>
+    </header>
+    <section class="filebar et-panel et-row" data-i18n-aria="fileControls">
+      <button class="et-button et-button-primary" id="openBtn"><span aria-hidden="true">↥</span><span data-i18n="open">Відкрити CSV</span></button>
+      <span class="et-small et-muted" data-i18n="fileHint">CSV з колонкою Timestamp та числовими сигналами</span>
+      <span class="filebar-status et-status" data-tone="ready" data-i18n="local">Локально · без інтернету</span>
+    </section>
+    <div id="error" class="et-notice main-error" data-tone="fault" role="alert" hidden></div>
+    <section id="welcome" class="welcome et-panel">
+      <div class="et-status" data-tone="ready" data-i18n="local">Локально · без інтернету</div>
+      <div class="welcome-icon" aria-hidden="true"><svg width="42" height="42" viewBox="0 0 32 32" fill="none"><path d="M16 22V5m0 0L10 11m6-6l6 6M6 21v6h20v-6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <h1 data-i18n="welcomeTitle">Відкрийте файл з HMI</h1>
+      <p class="et-muted welcome-description" data-i18n="welcomeDescription">Перетягніть CSV сюди або виберіть на комп’ютері. Графіки з датою й часом з’являться автоматично.</p>
+      <button class="et-button et-button-primary" id="chooseBtn" data-i18n="choose">Вибрати файл</button>
+      <p class="et-small et-muted" data-i18n="fileHint">CSV з колонкою Timestamp та числовими сигналами</p>
+      <div class="welcome-features et-small et-muted"><span data-i18n="featureTime">↔ Спільна шкала часу</span><span data-i18n="featureScale">⊕ Авто / ручний масштаб</span><span data-i18n="featureValues">⌖ Значення в точці</span></div>
+    </section>
+    <div id="workspace" class="workspace" hidden>
+      <aside class="sidebar et-panel">
+        <div class="eyebrow" data-i18n="file">Відкритий файл</div><div id="fileName" class="file-name"></div><div id="fileMeta" class="file-meta et-muted"></div>
+        <div class="sidebar-section"><div class="side-heading"><h2 data-i18n="signals">Сигнали</h2><button id="allBtn" class="text-button" data-i18n="showAll">Показати всі</button></div><div id="signals" class="signals"></div></div>
+        <div class="sidebar-section side-readings"><div class="eyebrow" data-i18n="cursorValues">Значення під курсором</div><div id="cursorTime" class="sidebar-time"></div><div id="readings"></div></div>
+        <div class="sidebar-section side-help"><p class="et-small et-muted" data-i18n="sideHelp">Колесо — масштаб часу. Перетягування — прокрутка. Подвійний клік — весь період.</p><p class="et-small et-muted" data-i18n="sideYHelp">Зніміть «Автомасштаб Y», щоб зафіксувати вертикальну шкалу та задати власні межі.</p></div>
+        <span class="et-status sidebar-status" data-tone="ready" data-i18n="local">Локально · без інтернету</span>
+      </aside>
+      <section class="content" data-i18n-aria="signalGraphs">
+        <div id="warnings" class="et-notice" data-tone="warning" role="status" hidden></div>
+        <div class="range-card et-panel">
+          <div class="range-top"><div><div class="eyebrow" data-i18n="timeRange">Часовий діапазон</div><div id="rangeLabel" class="range-label"></div></div>
+            <div class="toolbar et-row"><button class="et-button small preset" data-span="3600000" data-i18n="oneHour">1 год</button><button class="et-button small preset" data-span="21600000" data-i18n="sixHours">6 год</button><button class="et-button small preset" data-span="86400000" data-i18n="oneDay">1 доба</button><span class="divider"></span><button id="prevBtn" class="et-button et-icon" data-i18n-title="previous" data-i18n-aria="previous">‹</button><button id="zoomInBtn" class="et-button et-icon" data-i18n-title="zoomIn" data-i18n-aria="zoomIn">+</button><button id="zoomOutBtn" class="et-button et-icon" data-i18n-title="zoomOut" data-i18n-aria="zoomOut">−</button><button id="nextBtn" class="et-button et-icon" data-i18n-title="next" data-i18n-aria="next">›</button><button id="resetBtn" class="et-button small" data-i18n="fullRange">Весь період</button></div>
+          </div>
+          <canvas id="overview" class="overview" tabindex="0" role="img" data-i18n-aria="overviewAria"></canvas>
+          <form class="date-inputs et-row" id="rangeForm"><label class="et-field"><span data-i18n="from">Від</span><input type="datetime-local" id="fromInput" step="1" required data-i18n-aria="rangeStart"></label><label class="et-field"><span data-i18n="to">До</span><input type="datetime-local" id="toInput" step="1" required data-i18n-aria="rangeEnd"></label><button class="et-button small" type="submit" data-i18n="show">Показати</button><span class="range-note et-muted et-small" data-i18n="sharedTime">Спільний час для всіх графіків</span></form>
+        </div>
+        <div id="charts"></div><div id="noSignals" class="et-panel charts-empty et-muted" data-i18n="noSignals" hidden>Виберіть сигнали, щоб показати графіки.</div>
+      </section>
+    </div>
+    <footer class="footer et-small et-muted"><span>MFC2000 HMI Graphs Viewer · 2.1</span><span data-i18n="footer">Дата й час — як у файлі HMI. Дані залишаються на вашому пристрої.</span></footer>
+  </main>
+  <input id="fileInput" type="file" accept=".csv,.txt,text/csv,text/plain" hidden>
+  <div class="loading" id="loading" hidden><div class="et-panel loading-box" role="status" aria-live="polite"><div class="spinner"></div><strong data-i18n="loading">Читаю файл…</strong><p id="loadingText" class="et-small et-muted"></p></div></div>
+  <div id="dragOverlay" class="drag-overlay" data-i18n="drop" hidden>Відпустіть CSV, щоб відкрити</div>
+  <dialog id="help" aria-labelledby="helpTitle"><h2 id="helpTitle" data-i18n="helpTitle">Як переглядати графіки</h2><ul><li data-i18n="helpTime"></li><li data-i18n="helpPan"></li><li data-i18n="helpCursor"></li><li data-i18n="helpY"></li><li data-i18n="helpManual"></li><li data-i18n="helpDate"></li><li data-i18n="helpOverview"></li><li data-i18n="helpKeys"></li></ul><p class="et-small et-muted" data-i18n="helpPrivacy"></p><div class="dialog-footer"><button class="et-button et-button-primary" id="closeHelp" data-i18n="understood">Зрозуміло</button></div></dialog>
+  <script>
+'use strict';
+const messages = {
+ uk: {
+  appSubtitle:'Перегляд архівів HMI · CSV · дата й час', fileControls:'Вибір файлу HMI',
+  graphs:'Графіки', appTitle:'HMI · Графіки', skip:'До основного вмісту', portal:'Головний портал Engineering Tools', navigation:'Керування програмою', language:'Мова', theme:'Перемкнути світлу / темну тему', help:'Керування', open:'Відкрити CSV', local:'Локально · без інтернету',
+  welcomeTitle:'Відкрийте файл з HMI', welcomeDescription:'Перетягніть CSV сюди або виберіть на комп’ютері. Графіки з датою й часом з’являться автоматично.', choose:'Вибрати файл', fileHint:'CSV з колонкою Timestamp та числовими сигналами', featureTime:'↔ Спільна шкала часу', featureScale:'⊕ Авто / ручний масштаб', featureValues:'⌖ Значення в точці',
+  file:'Відкритий файл', signals:'Сигнали', showAll:'Показати всі', cursorValues:'Значення під курсором', cursorHint:'Наведіть курсор на графік', sideHelp:'Колесо — масштаб часу. Перетягування — прокрутка. Подвійний клік — весь період.', sideYHelp:'Зніміть «Автомасштаб Y», щоб зафіксувати вертикальну шкалу та задати власні межі.', signalGraphs:'Графіки сигналів', fileMeta:'{rows} записів · {signals} сигналів',
+  timeRange:'Часовий діапазон', oneHour:'1 год', sixHours:'6 год', oneDay:'1 доба', previous:'Попередній період', next:'Наступний період', zoomIn:'Наблизити час', zoomOut:'Віддалити час', fullRange:'Весь період', overviewAria:'Огляд запису. Перетягніть виділення або його краї, щоб змінити часовий діапазон.', from:'Від', to:'До', rangeStart:'Початок діапазону', rangeEnd:'Кінець діапазону', show:'Показати', sharedTime:'Спільний час для всіх графіків', noSignals:'Виберіть сигнали, щоб показати графіки.', footer:'Дата й час — як у файлі HMI. Дані залишаються на вашому пристрої.',
+  autoY:'Автомасштаб Y', autoYAria:'Автомасштаб вертикальної шкали: {signal}', min:'Мін.', max:'Макс.', apply:'Застосувати', yMinAria:'Нижня межа шкали: {signal}', yMaxAria:'Верхня межа шкали: {signal}', yZoomIn:'Наблизити вертикальну шкалу', yZoomOut:'Віддалити вертикальну шкалу', autoMode:'Y · автоматично', manualMode:'Y · зафіксовано', yInvalid:'Введіть дві скінченні числові межі: мінімум має бути меншим за максимум.', graphAria:'{signal} за часом. Колесо — масштаб часу, перетягування — прокрутка.', noData:'Немає значень у цьому періоді',
+  loading:'Читаю файл…', progressRead:'Читаю {file}', progressCount:'Прочитано {count} записів', progressSort:'Упорядковую записи за часом', progressScale:'Готую масштабування графіків', drop:'Відпустіть CSV, щоб відкрити',
+  helpTitle:'Як переглядати графіки', helpTime:'Час: крутіть колесо над графіком або користуйтеся кнопками + / − над смугою огляду.', helpPan:'Прокрутка часу: затисніть ліву кнопку й потягніть графік або рухайте виділення на смузі огляду.', helpCursor:'Значення: наведіть курсор або торкніться графіка. Лінія відповідає найближчому запису HMI.', helpY:'Автомасштаб Y: вертикальна шкала підлаштовується до видимого періоду. Зніміть галочку, щоб зафіксувати поточні межі.', helpManual:'Ручний масштаб Y: задайте «Мін.» і «Макс.» та натисніть «Застосувати». Кнопки Y+ / Y− змінюють вертикальний масштаб. Автомасштаб можна увімкнути знову.', helpDate:'Перейти до дати: задайте «Від» і «До» та натисніть «Показати». «Весь період» або подвійний клік скидає лише масштаб часу.', helpOverview:'Смуга огляду: перетягніть виділену область або її краї. Усі графіки використовують один часовий діапазон.', helpKeys:'Клавіатура на графіку: ← / → — прокрутка, + / − — масштаб часу, Home — весь період. Tab переходить між елементами керування.', helpPrivacy:'Дані обробляються у браузері. Розриви в записі не з’єднуються лінією. Після закриття програми відкрийте CSV знову.', understood:'Зрозуміло',
+  errorQuote:'У файлі є незакрита лапка. Перевірте, чи CSV збережений повністю.', errorEmpty:'Файл порожній. Виберіть CSV з вимірами HMI.', errorColumns:'Не знайдено колонки даних. Очікується CSV із Timestamp та числовими сигналами.', errorDates:'Не знайдено записів із правильною датою. Очікуваний вигляд: 06/09/2026 - 00:30:30.', errorNumbers:'Файл має дати, але не містить числових сигналів.', errorRead:'Не вдалося прочитати файл. Спробуйте відкрити програму в Chrome або Edge.', errorWorker:'Браузер не дозволив читання файлу. Відкрийте програму в Chrome або Edge.', errorRange:'Початок періоду має бути раніше за його кінець.',
+  warnSkipped:'Пропущено рядків із неправильною датою або кількістю колонок: {count}.', warnMissing:'Порожні чи нечислові значення показано розривами.', warnSort:'Записи впорядковано за часом.', warnDuplicates:'Повторів часу: {count}.', warnIgnored:'Нечислові колонки не показані: {names}.',
+  signalNames:{Frequency:'Частота','Motor Curr':'Струм двигуна','Motor Volt':'Напруга двигуна','Cells Temp':'Температура комірок','Trafo Temp':'Температура трансформатора','Grid Voltage':'Напруга мережі','Curr. line':'Струм лінії'}
+ },
+ pl: {
+  appSubtitle:'Przeglądanie archiwów HMI · CSV · data i godzina', fileControls:'Wybór pliku HMI',
+  graphs:'Wykresy', appTitle:'HMI · Wykresy', skip:'Przejdź do treści', portal:'Portal główny Engineering Tools', navigation:'Sterowanie programem', language:'Język', theme:'Przełącz jasny / ciemny motyw', help:'Obsługa', open:'Otwórz CSV', local:'Lokalnie · bez internetu',
+  welcomeTitle:'Otwórz plik z HMI', welcomeDescription:'Przeciągnij tutaj plik CSV lub wybierz go z urządzenia. Wykresy z datą i godziną pojawią się automatycznie.', choose:'Wybierz plik', fileHint:'CSV z kolumną Timestamp i sygnałami liczbowymi', featureTime:'↔ Wspólna oś czasu', featureScale:'⊕ Skala auto / ręczna', featureValues:'⌖ Wartości w punkcie',
+  file:'Otwarty plik', signals:'Sygnały', showAll:'Pokaż wszystkie', cursorValues:'Wartości pod kursorem', cursorHint:'Najedź kursorem na wykres', sideHelp:'Kółko — skala czasu. Przeciąganie — przesuwanie. Dwukrotne kliknięcie — cały okres.', sideYHelp:'Odznacz „Autoskala Y”, aby zablokować skalę pionową i ustawić własne granice.', signalGraphs:'Wykresy sygnałów', fileMeta:'Liczba próbek: {rows} · sygnałów: {signals}',
+  timeRange:'Zakres czasu', oneHour:'1 godz.', sixHours:'6 godz.', oneDay:'1 doba', previous:'Poprzedni okres', next:'Następny okres', zoomIn:'Przybliż oś czasu', zoomOut:'Oddal oś czasu', fullRange:'Cały okres', overviewAria:'Podgląd całego zapisu. Przeciągnij zaznaczenie lub jego krawędzie, aby zmienić zakres czasu.', from:'Od', to:'Do', rangeStart:'Początek zakresu', rangeEnd:'Koniec zakresu', show:'Pokaż', sharedTime:'Wspólny czas dla wszystkich wykresów', noSignals:'Wybierz sygnały, aby wyświetlić wykresy.', footer:'Data i godzina jak w pliku HMI. Dane pozostają na Twoim urządzeniu.',
+  autoY:'Autoskala Y', autoYAria:'Automatyczna skala pionowa: {signal}', min:'Min.', max:'Maks.', apply:'Zastosuj', yMinAria:'Dolna granica skali: {signal}', yMaxAria:'Górna granica skali: {signal}', yZoomIn:'Przybliż skalę pionową', yZoomOut:'Oddal skalę pionową', autoMode:'Y · automatycznie', manualMode:'Y · zablokowana', yInvalid:'Podaj dwie skończone wartości liczbowe: minimum musi być mniejsze od maksimum.', graphAria:'{signal} w czasie. Kółko — skala czasu, przeciąganie — przesuwanie.', noData:'Brak wartości w tym okresie',
+  loading:'Odczytywanie pliku…', progressRead:'Odczytywanie {file}', progressCount:'Odczytano próbek: {count}', progressSort:'Sortowanie próbek według czasu', progressScale:'Przygotowanie skalowania wykresów', drop:'Upuść CSV, aby otworzyć',
+  helpTitle:'Jak przeglądać wykresy', helpTime:'Czas: użyj kółka nad wykresem lub przycisków + / − nad paskiem podglądu.', helpPan:'Przesuwanie czasu: przytrzymaj lewy przycisk i przeciągnij wykres lub przesuń zaznaczenie na pasku podglądu.', helpCursor:'Wartości: najedź kursorem lub dotknij wykresu. Linia wskazuje najbliższą próbkę HMI.', helpY:'Autoskala Y: skala pionowa dopasowuje się do widocznego okresu. Odznacz pole, aby zablokować bieżące granice.', helpManual:'Ręczna skala Y: ustaw „Min.” i „Maks.”, a następnie kliknij „Zastosuj”. Przyciski Y+ / Y− zmieniają skalę pionową. Autoskale można ponownie włączyć.', helpDate:'Przejście do daty: ustaw „Od” i „Do”, a następnie kliknij „Pokaż”. „Cały okres” lub dwukrotne kliknięcie resetuje tylko skalę czasu.', helpOverview:'Pasek podglądu: przeciągnij zaznaczony obszar lub jego krawędzie. Wszystkie wykresy używają tego samego zakresu czasu.', helpKeys:'Klawiatura na wykresie: ← / → — przesuwanie, + / − — skala czasu, Home — cały okres. Tab przechodzi między elementami sterowania.', helpPrivacy:'Dane są przetwarzane w przeglądarce. Przerwy w zapisie nie są łączone linią. Po zamknięciu programu otwórz plik CSV ponownie.', understood:'Rozumiem',
+  errorQuote:'Plik zawiera niedomknięty cudzysłów. Sprawdź, czy CSV został zapisany w całości.', errorEmpty:'Plik jest pusty. Wybierz CSV z pomiarami HMI.', errorColumns:'Nie znaleziono kolumn danych. Oczekiwany CSV z Timestamp i sygnałami liczbowymi.', errorDates:'Nie znaleziono próbek z prawidłową datą. Oczekiwany format: 06/09/2026 - 00:30:30.', errorNumbers:'Plik zawiera daty, ale nie zawiera sygnałów liczbowych.', errorRead:'Nie udało się odczytać pliku. Spróbuj otworzyć program w Chrome lub Edge.', errorWorker:'Przeglądarka zablokowała odczyt pliku. Otwórz program w Chrome lub Edge.', errorRange:'Początek okresu musi być wcześniejszy niż jego koniec.',
+  warnSkipped:'Pominięte wiersze z nieprawidłową datą lub liczbą kolumn: {count}.', warnMissing:'Puste lub nieliczbowe wartości są pokazane jako przerwy.', warnSort:'Próbki posortowano według czasu.', warnDuplicates:'Powtarzające się znaczniki czasu: {count}.', warnIgnored:'Kolumny nieliczbowe pominięto: {names}.',
+  signalNames:{Frequency:'Częstotliwość','Motor Curr':'Prąd silnika','Motor Volt':'Napięcie silnika','Cells Temp':'Temperatura ogniw','Trafo Temp':'Temperatura transformatora','Grid Voltage':'Napięcie sieci','Curr. line':'Prąd linii'}
+ },
+ en: {
+  appSubtitle:'HMI recording viewer · CSV · date and time', fileControls:'HMI file selection',
+  graphs:'Graphs', appTitle:'HMI · Graphs', skip:'Skip to content', portal:'Engineering Tools home portal', navigation:'Application controls', language:'Language', theme:'Switch light / dark theme', help:'Controls', open:'Open CSV', local:'Local · works offline',
+  welcomeTitle:'Open an HMI file', welcomeDescription:'Drop a CSV here or choose it from your device. Graphs with dates and times will appear automatically.', choose:'Choose file', fileHint:'CSV with a Timestamp column and numeric signals', featureTime:'↔ Shared time axis', featureScale:'⊕ Auto / manual scale', featureValues:'⌖ Values at cursor',
+  file:'Open file', signals:'Signals', showAll:'Show all', cursorValues:'Values at cursor', cursorHint:'Move the cursor over a graph', sideHelp:'Scroll wheel — time zoom. Drag — pan. Double click — full period.', sideYHelp:'Uncheck “Auto scale Y” to lock the vertical scale and enter your own limits.', signalGraphs:'Signal graphs', fileMeta:'{rows} samples · {signals} signals',
+  timeRange:'Time range', oneHour:'1 hour', sixHours:'6 hours', oneDay:'1 day', previous:'Previous period', next:'Next period', zoomIn:'Zoom in on time', zoomOut:'Zoom out on time', fullRange:'Full period', overviewAria:'Recording overview. Drag the selection or its edges to change the time range.', from:'From', to:'To', rangeStart:'Range start', rangeEnd:'Range end', show:'Show', sharedTime:'Shared time range for all graphs', noSignals:'Select signals to display their graphs.', footer:'Date and time match the HMI file. Your data stays on your device.',
+  autoY:'Auto scale Y', autoYAria:'Automatic vertical scale: {signal}', min:'Min.', max:'Max.', apply:'Apply', yMinAria:'Lower scale limit: {signal}', yMaxAria:'Upper scale limit: {signal}', yZoomIn:'Zoom in on vertical scale', yZoomOut:'Zoom out on vertical scale', autoMode:'Y · automatic', manualMode:'Y · locked', yInvalid:'Enter two finite numeric limits: minimum must be less than maximum.', graphAria:'{signal} over time. Scroll wheel — time zoom, drag — pan.', noData:'No values in this period',
+  loading:'Reading file…', progressRead:'Reading {file}', progressCount:'Read {count} samples', progressSort:'Sorting samples by time', progressScale:'Preparing graph scaling', drop:'Drop CSV to open',
+  helpTitle:'How to explore the graphs', helpTime:'Time: scroll over a graph or use the + / − buttons above the overview.', helpPan:'Pan through time: hold the left mouse button and drag a graph, or move the selection in the overview.', helpCursor:'Values: hover over or tap a graph. The line marks the nearest HMI sample.', helpY:'Auto scale Y: the vertical scale follows the visible period. Uncheck the box to lock the current limits.', helpManual:'Manual Y scale: enter “Min.” and “Max.”, then click “Apply”. The Y+ / Y− buttons change the vertical scale. You can re-enable automatic scaling at any time.', helpDate:'Go to a date: set “From” and “To”, then click “Show”. “Full period” or double click resets the time range only.', helpOverview:'Overview: drag the selection or its edges. All graphs use the same time range.', helpKeys:'Keyboard on a graph: ← / → — pan, + / − — time zoom, Home — full period. Tab moves between controls.', helpPrivacy:'Data is processed in your browser. Gaps in the recording are not joined by a line. Open the CSV again after closing the program.', understood:'Got it',
+  errorQuote:'The file contains an unclosed quote. Check that the CSV was fully saved.', errorEmpty:'The file is empty. Choose a CSV with HMI measurements.', errorColumns:'No data columns found. Expected a CSV with Timestamp and numeric signals.', errorDates:'No samples with valid dates found. Expected format: 06/09/2026 - 00:30:30.', errorNumbers:'The file contains dates but no numeric signals.', errorRead:'Could not read the file. Try opening the program in Chrome or Edge.', errorWorker:'The browser blocked file reading. Open the program in Chrome or Edge.', errorRange:'The start of the period must be earlier than its end.',
+  warnSkipped:'Skipped rows with an invalid date or column count: {count}.', warnMissing:'Empty or nonnumeric values are shown as gaps.', warnSort:'Samples were sorted by time.', warnDuplicates:'Repeated timestamps: {count}.', warnIgnored:'Nonnumeric columns omitted: {names}.',
+  signalNames:{Frequency:'Frequency','Motor Curr':'Motor current','Motor Volt':'Motor voltage','Cells Temp':'Cell temperature','Trafo Temp':'Transformer temperature','Grid Voltage':'Grid voltage','Curr. line':'Line current'}
+ }
+};
+
+</script>
+  <script>
+function workerMain(){
+ const NONE=4294967295;
+ function* rows(text,sep){let row=[],field='',quoted=false;for(let i=0;i<text.length;i++){const c=text[i];if(quoted){if(c==='"'){if(text[i+1]==='"'){field+='"';i++;}else quoted=false;}else field+=c;}else if(c==='"'&&field.length===0)quoted=true;else if(c===sep){row.push(field);field='';}else if(c==='\n'||c==='\r'){if(c==='\r'&&text[i+1]==='\n')i++;row.push(field);if(row.some(v=>v.trim()!==''))yield row;row=[];field='';}else field+=c;}if(quoted)throw Error('errorQuote');row.push(field);if(row.some(v=>v.trim()!==''))yield row;}
+ function timestamp(s){s=s.trim();let m=s.match(/^(\d{1,2})[/.](\d{1,2})[/.](\d{4})\s*(?:-\s*)?(\d{1,2}):(\d{2}):(\d{2})(?:[.,](\d{1,3}))?$/),y,mo,d,h,mi,se,ms;if(m){[,d,mo,y,h,mi,se,ms]=m;}else{m=s.match(/^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2}):(\d{2})(?:[.,](\d{1,3}))?$/);if(!m)return NaN;[,y,mo,d,h,mi,se,ms]=m;}y=+y;mo=+mo;d=+d;h=+h;mi=+mi;se=+se;ms=ms?+ms.padEnd(3,'0'):0;const t=Date.UTC(y,mo-1,d,h,mi,se,ms),z=new Date(t);return z.getUTCFullYear()===y&&z.getUTCMonth()===mo-1&&z.getUTCDate()===d&&z.getUTCHours()===h&&z.getUTCMinutes()===mi&&z.getUTCSeconds()===se?t:NaN;}
+ function number(s){s=s.trim();if(!s)return NaN;const n=Number(s.replace(',','.'));return Number.isFinite(n)?n:NaN;}
+ function buildLevels(v){const levels=[];for(const block of [64,1024,16384]){const size=Math.ceil(v.length/block),mi=new Uint32Array(size),ma=new Uint32Array(size),missing=new Uint8Array(size);mi.fill(NONE);ma.fill(NONE);const prev=levels.at(-1);for(let k=0;k<size;k++){if(!prev){for(let j=k*block;j<Math.min(v.length,(k+1)*block);j++){if(!Number.isFinite(v[j])){missing[k]=1;continue;}if(mi[k]===NONE||v[j]<v[mi[k]])mi[k]=j;if(ma[k]===NONE||v[j]>v[ma[k]])ma[k]=j;}}else{const start=k*16,end=Math.min(prev.min.length,start+16);for(let j=start;j<end;j++){let a=prev.min[j],b=prev.max[j];if(prev.missing[j])missing[k]=1;if(a!==NONE&&(mi[k]===NONE||v[a]<v[mi[k]]))mi[k]=a;if(b!==NONE&&(ma[k]===NONE||v[b]>v[ma[k]]))ma[k]=b;}}}levels.push({block,min:mi,max:ma,missing});}return levels;}
+ self.onmessage=async e=>{try{const file=e.data;self.postMessage({progress:'progressRead',args:{file:file.name}});const text=(await file.text()).replace(/^\uFEFF/,'');if(!text.trim())throw Error('errorEmpty');const first=text.split(/\r\n|\n|\r/,1)[0];let sep=',',best=0;for(const s of [',',';','\t']){const count=rows(first,s).next().value?.length||0;if(count>best){best=count;sep=s;}}const iter=rows(text,sep),headers=iter.next().value?.map(s=>s.trim());if(!headers||headers.length<2)throw Error('errorColumns');let timeCol=headers.findIndex(s=>/^(timestamp|date.?time|time|дата.?час)$/i.test(s));if(timeCol<0)timeCol=0;let capacity=1;for(let i=0;i<text.length;i++)if(text.charCodeAt(i)===10||(text.charCodeAt(i)===13&&text.charCodeAt(i+1)!==10))capacity++;const times=new Float64Array(capacity),columns=headers.map((_,i)=>i===timeCol?null:new Float64Array(capacity)),numericCount=new Array(headers.length).fill(0);let count=0,skipped=0,missing=0,sorted=false,record=1;for(const row of iter){record++;if(row.length!==headers.length){skipped++;continue;}const t=timestamp(row[timeCol]);if(!Number.isFinite(t)){skipped++;continue;}if(count&&t<times[count-1])sorted=true;times[count]=t;for(let c=0;c<headers.length;c++){if(c===timeCol)continue;const n=number(row[c]);columns[c][count]=n;if(Number.isFinite(n))numericCount[c]++;else missing++;}count++;if(count%50000===0)self.postMessage({progress:'progressCount',args:{count}});}if(!count)throw Error('errorDates');let t=times.slice(0,count),cs=columns.map(v=>v?v.slice(0,count):null);if(sorted){self.postMessage({progress:'progressSort'});const order=Array.from({length:count},(_,i)=>i).sort((a,b)=>t[a]-t[b]);t=Float64Array.from(order,i=>t[i]);cs=cs.map(v=>v?Float64Array.from(order,i=>v[i]):null);}const deltas=[];let duplicates=0;for(let i=1;i<count;i++){const delta=t[i]-t[i-1];if(delta>0&&deltas.length<10000)deltas.push(delta);if(!delta)duplicates++;}deltas.sort((a,b)=>a-b);const cadence=deltas.length?deltas[Math.floor(deltas.length/2)]:5000,gapLimit=Math.max(cadence*3,1000);const segments=[];let start=0,gaps=0;for(let i=1;i<count;i++)if(t[i]-t[i-1]>gapLimit){segments.push([start,i-1]);start=i;gaps++;}segments.push([start,count-1]);const series=[],ignored=[];self.postMessage({progress:'progressScale'});for(let c=0;c<headers.length;c++){if(c===timeCol)continue;if(!numericCount[c]){ignored.push(headers[c]);continue;}series.push({name:headers[c],values:cs[c],levels:buildLevels(cs[c])});}if(!series.length)throw Error('errorNumbers');const data={times:t,series,cadence,gapLimit,segments,rows:count,skipped,missing,sorted,duplicates,gaps,ignored,fileName:file.name};const buffers=[t.buffer];for(const s of series){buffers.push(s.values.buffer);for(const l of s.levels)buffers.push(l.min.buffer,l.max.buffer,l.missing.buffer);}self.postMessage({data},buffers);}catch(err){self.postMessage({error:err.message||'errorRead'});}};
+}
+
+</script>
+  <script>
+function inputTime(t){const d=new Date(Math.round(t/1000)*1000);return d.getUTCFullYear()+'-'+pad(d.getUTCMonth()+1)+'-'+pad(d.getUTCDate())+'T'+pad(d.getUTCHours())+':'+pad(d.getUTCMinutes())+':'+pad(d.getUTCSeconds());}
+
+function parseInput(s){const m=s.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2}))?$/);return m?Date.UTC(+m[1],+m[2]-1,+m[3],+m[4],+m[5],+(m[6]||0)):NaN;}
+
+function lower(t){let lo=0,hi=data.times.length;while(lo<hi){const m=(lo+hi)>>>1;if(data.times[m]<t)lo=m+1;else hi=m;}return lo;}
+
+function upper(t){let lo=0,hi=data.times.length;while(lo<hi){const m=(lo+hi)>>>1;if(data.times[m]<=t)lo=m+1;else hi=m;}return lo;}
+
+function nearest(t){const i=lower(t);if(!i)return 0;if(i>=data.rows)return data.rows-1;return t-data.times[i-1]<=data.times[i]-t?i-1:i;}
+
+function limits(){const a=data.times[0],b=data.times.at(-1);return [a,b>a?b:a+Math.max(data.cadence,1000)];}
+
+function sizeCanvas(canvas){const r=canvas.getBoundingClientRect(),dpr=Math.min(window.devicePixelRatio||1,2),w=Math.max(1,Math.round(r.width)),h=Math.max(1,Math.round(r.height));if(canvas.width!==Math.round(w*dpr)||canvas.height!==Math.round(h*dpr)){canvas.width=Math.round(w*dpr);canvas.height=Math.round(h*dpr);}const ctx=canvas.getContext('2d');ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,w,h);return {ctx,w,h};}
+
+function collect(s,lo,hi,target){const result=[];let level=null;const perPixel=(hi-lo+1)/Math.max(target,1);for(const l of s.levels)if(l.block<=perPixel)level=l;for(const [start,end]of data.segments){let a=Math.max(lo,start),b=Math.min(hi,end);if(a>b)continue;result.push(-1);if(!level){for(let j=a;j<=b;j++)result.push(j);}else{let j=a,block=level.block;while(j<=b&&j%block)result.push(j++);while(j+block-1<=b){const k=Math.floor(j/block),mi=level.min[k],ma=level.max[k];if(mi===4294967295)result.push(-1);else if(level.missing[k]){for(let p=j;p<j+block;p++)result.push(p);}else if(mi===ma)result.push(mi);else if(mi<ma)result.push(mi,ma);else result.push(ma,mi);j+=block;}while(j<=b)result.push(j++);}}return result;}
+
+function yRange(s,points){let min=Infinity,max=-Infinity;for(const i of points)if(i>=0&&Number.isFinite(s.values[i])){min=Math.min(min,s.values[i]);max=Math.max(max,s.values[i]);}if(min===Infinity)return [0,1,false];if(min===max){const pad=Math.max(Math.abs(min)*.05,1);return [min-pad,max+pad,true];}const extra=(max-min)*.08;return [min>=0?Math.max(0,min-extra):min-extra,max+extra,true];}
+
+function niceAxis(min,max){const raw=(max-min)/5,base=10**Math.floor(Math.log10(raw)),step=base*([1,2,2.5,5,10].find(n=>n>=raw/base)||10);return [Math.floor(min/step)*step,Math.ceil(max/step)*step,step];}
+
+function timeTicks(a,b,width){const steps=[1000,2000,5000,10000,15000,30000,60000,120000,300000,600000,900000,1800000,3600000,7200000,10800000,21600000,43200000,86400000,172800000,259200000,432000000,604800000,1209600000,2592000000];const desired=(b-a)/Math.max(2,Math.floor(width/145));const step=steps.find(v=>v>=desired)||Math.ceil(desired/2592000000)*2592000000;const ticks=[];for(let t=Math.ceil(a/step)*step;t<=b&&ticks.length<30;t+=step)ticks.push(t);return {ticks,step};}
+
+function chartFraction(c,event){const r=c.canvas.getBoundingClientRect(),g=c.geometry||{left:70,pw:r.width-88};return Math.max(0,Math.min(1,(event.clientX-r.left-g.left)/g.pw));}
+
+function keyNavigation(e){if(!data)return;if(e.key==='ArrowLeft'){pan(-.25);}else if(e.key==='ArrowRight'){pan(.25);}else if(e.key==='+'||e.key==='='){zoom(.5);}else if(e.key==='-'||e.key==='−'){zoom(2);}else if(e.key==='Home'||e.key==='0'){reset();}else return;e.preventDefault();}
+
+</script>
+  <script>
+'use strict';
+const $=id=>document.getElementById(id);
+const pad=n=>String(n).padStart(2,'0');
+const palette={light:['#157568','#b35b1c','#346faf','#ab497b','#7c59ae','#257d92','#7c6b17'],dark:['#62c9b3','#f4ad71','#91baff','#e792bc','#bda0ec','#80cbdc','#d3c16d']};
+const locales={uk:'uk-UA',pl:'pl-PL',en:'en-GB'};
+let lang='uk';
+try{const saved=localStorage.getItem('hmi-language');if(messages[saved])lang=saved;}catch{}
+let data=null,worker=null,view=[0,1],hover=-1,charts=[],drawPending=false,drag=null,overviewDrag=null,dragDepth=0,errorState=null,progressState=null;
+
+function tr(key,args={}){const text=messages[lang][key]??messages.uk[key]??key;return String(text).replace(/\{(\w+)\}/g,(_,k)=>args[k]??'');}
+function num(v){return v.toLocaleString(locales[lang]);}
+function formatValue(v){return Number.isFinite(v)?v.toLocaleString(locales[lang],{maximumFractionDigits:3}):'—';}
+function compact(v){if(!Number.isFinite(v))return '—';if(Math.abs(v)>=1e7||Math.abs(v)>0&&Math.abs(v)<.0001)return v.toExponential(1);return v.toLocaleString(locales[lang],{maximumFractionDigits:Math.abs(v)<1?5:3});}
+// The HMI date has no timezone. UTC accessors preserve its wall-clock time.
+function formatTime(t,withSeconds=true){const d=new Date(t);return pad(d.getUTCDate())+'.'+pad(d.getUTCMonth()+1)+'.'+d.getUTCFullYear()+' '+pad(d.getUTCHours())+':'+pad(d.getUTCMinutes())+(withSeconds?':'+pad(d.getUTCSeconds()):'');}
+function element(tag,cls,text){const e=document.createElement(tag);if(cls)e.className=cls;if(text!==undefined)e.textContent=text;return e;}
+function titleInfo(name){const clean=name.replace(/\((float|double|int|integer)\)/gi,'').trim(),unit=(clean.match(/\[([^\]]+)\]/)||[])[1]||'',base=clean.replace(/\s*\[[^\]]+\]/g,'').trim();return {label:messages[lang].signalNames[base]||base,unit};}
+function showError(key=null,args={}){errorState=key?{key,args}:null;$('error').textContent=key?tr(key,args):'';$('error').hidden=!key;}
+function renderProgress(){if(progressState){const args={...progressState.args};if(typeof args.count==='number')args.count=num(args.count);$('loadingText').textContent=tr(progressState.key,args);}}
+function renderWarnings(){if(!data)return;const result=[];if(data.skipped)result.push(tr('warnSkipped',{count:num(data.skipped)}));if(data.missing)result.push(tr('warnMissing'));if(data.sorted)result.push(tr('warnSort'));if(data.duplicates)result.push(tr('warnDuplicates',{count:num(data.duplicates)}));if(data.ignored.length)result.push(tr('warnIgnored',{names:data.ignored.join(', ')}));$('warnings').textContent=result.join(' ');$('warnings').hidden=!result.length;}
+
+function applyLanguage(){
+ document.documentElement.lang=lang;document.title='MFC2000 HMI Graphs Viewer';$('languageBtn').textContent=lang.toUpperCase();
+ for(const button of document.querySelectorAll('[data-language]'))button.setAttribute('aria-checked',String(button.dataset.language===lang));
+ for(const e of document.querySelectorAll('[data-i18n]'))e.textContent=tr(e.dataset.i18n);
+ for(const e of document.querySelectorAll('[data-i18n-aria]'))e.setAttribute('aria-label',tr(e.dataset.i18nAria));
+ for(const e of document.querySelectorAll('[data-i18n-title]'))e.title=tr(e.dataset.i18nTitle);
+ if(errorState)showError(errorState.key,errorState.args);renderProgress();
+ if(data){$('fileMeta').textContent=tr('fileMeta',{rows:num(data.rows),signals:num(data.series.length)});renderWarnings();for(const c of charts)translateChart(c);updateControls();}
+ updateHover();scheduleDraw();
+}
+
+function setView(a,b){
+ if(!data||!Number.isFinite(a)||!Number.isFinite(b)||b<=a)return;
+ const [min,max]=limits(),full=max-min,minSpan=Math.min(full,Math.max(1000,data.cadence*2));
+ const span=Math.max(minSpan,Math.min(full,b-a));a=Math.max(min,Math.min(max-span,a));view=[a,a+span];hover=-1;
+ updateControls();updateHover();scheduleDraw();
+}
+function zoom(factor,anchor=.5){if(!data)return;const span=view[1]-view[0],t=view[0]+span*anchor,newSpan=span*factor;setView(t-newSpan*anchor,t+newSpan*(1-anchor));}
+function pan(fraction){if(!data)return;const s=(view[1]-view[0])*fraction;setView(view[0]+s,view[1]+s);}
+function reset(){if(data)setView(...limits());}
+function updateControls(){
+ const [min,max]=limits();$('rangeLabel').textContent=formatTime(view[0],false)+' — '+formatTime(view[1],false);
+ $('fromInput').value=inputTime(view[0]);$('toInput').value=inputTime(view[1]);$('fromInput').min=$('toInput').min=inputTime(min);$('fromInput').max=$('toInput').max=inputTime(max);
+ $('prevBtn').disabled=view[0]<=min;$('nextBtn').disabled=view[1]>=max;$('zoomOutBtn').disabled=view[1]-view[0]>=max-min;
+ for(const b of document.querySelectorAll('.preset'))b.setAttribute('aria-pressed',String(Math.abs((view[1]-view[0])-Number(b.dataset.span))<1000));
+}
+
+function scaleInputValue(v){return Number(v.toPrecision(12)).toString();}
+function setScaleError(c,key=null){c.errorKey=key;c.scaleError.textContent=key?tr(key):'';c.scaleError.hidden=!key;c.minInput.setAttribute('aria-invalid',String(!!key));c.maxInput.setAttribute('aria-invalid',String(!!key));}
+function syncScaleControls(c,updateInputs=false){
+ c.autoInput.checked=c.autoY;
+ c.minInput.disabled=c.maxInput.disabled=c.applyButton.disabled=c.autoY;
+ c.mode.textContent=tr(c.autoY?'autoMode':'manualMode');
+ if(updateInputs&&c.yRange){c.minInput.value=scaleInputValue(c.yRange[0]);c.maxInput.value=scaleInputValue(c.yRange[1]);}
+}
+function freezeY(c){if(c.autoY){drawChart(c);c.autoY=false;c.manualRange=[...c.yRange];}setScaleError(c);syncScaleControls(c,true);}
+function zoomY(c,factor){
+ freezeY(c);const [min,max]=c.manualRange,center=min/2+max/2,half=(max-min)*factor/2;
+ const a=center-half,b=center+half;if(!validY(a,b))return;
+ c.manualRange=[a,b];c.yRange=[a,b];syncScaleControls(c,true);scheduleDraw();
+}
+function validY(a,b){const span=b-a;return Number.isFinite(a)&&Number.isFinite(b)&&b>a&&Number.isFinite(span)&&span>Math.max(Math.abs(a),Math.abs(b),1)*Number.EPSILON*32;}
+function readScaleInput(input){const value=input.value.trim().replace(',','.');return value?Number(value):NaN;}
+function createScaleControls(c){
+ const form=element('form','y-controls');form.noValidate=true;
+ const label=element('label','et-check'),auto=element('input');auto.type='checkbox';auto.checked=true;const autoText=element('span');label.append(auto,autoText);
+ const fields=element('div','y-fields');
+ function bound(which){const l=element('label','et-field'),text=element('span'),input=element('input');input.type='text';input.inputMode='decimal';input.autocomplete='off';input.spellcheck=false;input.required=true;input.dataset.bound=which;input.setAttribute('aria-describedby','y-error-'+c.index);l.append(text,input);fields.append(l);return {input,text};}
+ const min=bound('min'),max=bound('max'),apply=element('button','et-button');apply.type='submit';fields.append(apply);
+ const plus=element('button','et-button y-zoom','Y+'),minus=element('button','et-button y-zoom','Y−');plus.type=minus.type='button';fields.append(plus,minus);
+ const mode=element('span','y-mode');form.append(label,fields,mode);
+ const error=element('p','y-error');error.id='y-error-'+c.index;error.hidden=true;error.setAttribute('role','alert');
+ Object.assign(c,{scaleForm:form,autoInput:auto,autoText,minInput:min.input,maxInput:max.input,minText:min.text,maxText:max.text,applyButton:apply,plusButton:plus,minusButton:minus,mode,scaleError:error,errorKey:null});
+ auto.addEventListener('change',()=>{if(auto.checked){c.autoY=true;setScaleError(c);syncScaleControls(c);scheduleDraw();}else{freezeY(c);scheduleDraw();}});
+ form.addEventListener('submit',e=>{e.preventDefault();if(c.autoY)return;const a=readScaleInput(c.minInput),b=readScaleInput(c.maxInput);if(!validY(a,b)){setScaleError(c,'yInvalid');(Number.isFinite(a)?c.maxInput:c.minInput).focus();return;}c.manualRange=[a,b];c.yRange=[a,b];setScaleError(c);syncScaleControls(c,true);scheduleDraw();});
+ plus.addEventListener('click',()=>zoomY(c,.5));minus.addEventListener('click',()=>zoomY(c,2));
+ return [form,error];
+}
+function translateChart(c){
+ Object.assign(c.series,titleInfo(c.series.name));const s=c.series,display=s.label+(s.unit?' · '+s.unit:'');
+ c.title.textContent=c.signalLabel.textContent=display;c.readingLabel.textContent=s.label;
+ c.canvas.setAttribute('aria-label',tr('graphAria',{signal:s.label}));
+ c.autoText.textContent=tr('autoY');c.autoInput.setAttribute('aria-label',tr('autoYAria',{signal:s.label}));
+ c.minText.textContent=tr('min');c.maxText.textContent=tr('max');c.applyButton.textContent=tr('apply');
+ c.minInput.setAttribute('aria-label',tr('yMinAria',{signal:s.label}));c.maxInput.setAttribute('aria-label',tr('yMaxAria',{signal:s.label}));
+ for(const [button,key]of[[c.plusButton,'yZoomIn'],[c.minusButton,'yZoomOut']]){button.title=tr(key);button.setAttribute('aria-label',tr(key));}
+ syncScaleControls(c);if(c.errorKey)setScaleError(c,c.errorKey);
+}
+function mountData(d){
+ data=d;charts=[];hover=-1;$('signals').replaceChildren();$('charts').replaceChildren();$('readings').replaceChildren();$('fileName').textContent=d.fileName;
+ d.series.forEach((s,i)=>{
+  Object.assign(s,titleInfo(s.name),{visible:true,colorIndex:i});
+  const label=element('label','signal'),check=element('input');check.type='checkbox';check.checked=true;check.dataset.signal=i;
+  const dot=element('i','signal-color'),text=element('span','signal-text'),signalLabel=element('span','signal-label');text.append(signalLabel,element('span','signal-source',s.name));label.append(check,dot,text);$('signals').append(label);
+  const card=element('article','chart-card et-panel'),head=element('div','chart-heading'),titleWrap=element('div','chart-title'),color=element('i'),title=element('h2');titleWrap.append(color,title);const output=element('output');head.append(titleWrap,output);
+  const canvas=element('canvas','chart-canvas');canvas.tabIndex=0;canvas.setAttribute('role','img');
+  const reading=element('div','reading'),readingLabel=element('span'),readingValue=element('strong','','—');reading.append(readingLabel,readingValue);$('readings').append(reading);
+  const c={index:i,series:s,card,canvas,title,output,readingLabel,readingValue,signalLabel,dot,color,autoY:true,manualRange:null,yRange:[0,1],geometry:null};
+  card.append(head,...createScaleControls(c),canvas);$('charts').append(card);charts.push(c);translateChart(c);bindChart(c);
+  check.addEventListener('change',()=>{s.visible=check.checked;card.hidden=reading.hidden=!s.visible;$('noSignals').hidden=data.series.some(x=>x.visible);scheduleDraw();});
+ });
+ $('welcome').hidden=true;$('workspace').hidden=false;$('noSignals').hidden=true;applyLanguage();reset();
+}
+async function loadFile(file){
+ if(!file)return;showError();worker?.terminate();$('loading').hidden=false;progressState={key:'progressRead',args:{file:file.name}};renderProgress();
+ const url=URL.createObjectURL(new Blob(['('+workerMain.toString()+')()'],{type:'text/javascript'}));let active;
+ try{active=worker=new Worker(url);}catch{URL.revokeObjectURL(url);$('loading').hidden=true;showError('errorWorker');return;}URL.revokeObjectURL(url);
+ active.onmessage=e=>{if(worker!==active)return;if(e.data.progress){progressState={key:e.data.progress,args:e.data.args||{}};renderProgress();}else{active.terminate();worker=null;$('loading').hidden=true;if(e.data.error)showError(messages.uk[e.data.error]?e.data.error:'errorRead');else mountData(e.data.data);}};
+ active.onerror=()=>{if(worker!==active)return;$('loading').hidden=true;active.terminate();worker=null;showError('errorRead');};active.postMessage(file);
+}
+
+function paintTheme(){const css=getComputedStyle(document.documentElement),dark=document.documentElement.dataset.theme==='dark';return {grid:css.getPropertyValue('--et-border').trim(),muted:css.getPropertyValue('--et-muted').trim(),bg:css.getPropertyValue('--et-bg').trim(),surface:css.getPropertyValue('--et-surface').trim(),accent:css.getPropertyValue('--et-accent').trim(),onAccent:css.getPropertyValue('--et-on-accent').trim(),soft:css.getPropertyValue('--et-soft').trim(),colors:palette[dark?'dark':'light']};}
+function signalColor(s,theme){return theme.colors[s.colorIndex%theme.colors.length];}
+function drawChart(c){
+ const theme=paintTheme(),color=signalColor(c.series,theme);c.dot.style.background=c.color.style.background=color;
+ if(c.card.hidden)return;
+ const {ctx,w,h}=sizeCanvas(c.canvas),left=w<450?58:76,right=20,top=15,bottom=48,pw=w-left-right,ph=h-top-bottom;if(pw<20)return;
+ const lo=Math.max(0,lower(view[0])-1),hi=Math.min(data.rows-1,upper(view[1])),points=collect(c.series,lo,hi,pw),visible=points.filter(i=>i>=0&&data.times[i]>=view[0]&&data.times[i]<=view[1]);
+ const [rawMin,rawMax,hasData]=yRange(c.series,visible);
+ const autoRange=niceAxis(rawMin,rawMax),range=c.autoY?autoRange:(c.manualRange||autoRange),min=range[0],max=range[1];
+ c.yRange=[min,max];if(c.autoY)syncScaleControls(c,true);
+ const yStep=c.autoY?autoRange[2]:niceAxis(min,max)[2];
+ const x=t=>left+(t-view[0])/(view[1]-view[0])*pw,y=v=>top+(max-v)/(max-min)*ph;
+ ctx.font='11px "Segoe UI",Arial';ctx.lineWidth=1;ctx.textBaseline='middle';
+ const first=Math.ceil((min-yStep*1e-9)/yStep)*yStep;
+ for(let i=0;i<20;i++){const val=first+yStep*i;if(val>max+yStep*1e-9)break;const yp=y(val);ctx.strokeStyle=theme.grid;ctx.beginPath();ctx.moveTo(left,yp);ctx.lineTo(w-right,yp);ctx.stroke();ctx.fillStyle=theme.muted;ctx.textAlign='right';ctx.fillText(compact(Math.abs(val)<yStep*1e-9?0:val),left-10,yp);}
+ const {ticks,step}=timeTicks(...view,pw);
+ for(const t of ticks){const xp=x(t);ctx.strokeStyle=theme.grid;ctx.beginPath();ctx.moveTo(xp,top);ctx.lineTo(xp,top+ph);ctx.stroke();const d=new Date(t);ctx.fillStyle=theme.muted;ctx.textAlign=xp>w-right-40?'right':xp<left+40?'left':'center';const time=pad(d.getUTCHours())+':'+pad(d.getUTCMinutes())+(step<60000?':'+pad(d.getUTCSeconds()):'');ctx.fillText(time,xp,top+ph+17);ctx.font='10px "Segoe UI",Arial';ctx.fillText(pad(d.getUTCDate())+'.'+pad(d.getUTCMonth()+1)+'.'+d.getUTCFullYear(),xp,top+ph+32);ctx.font='11px "Segoe UI",Arial';}
+ ctx.save();ctx.beginPath();ctx.rect(left,top,pw,ph);ctx.clip();ctx.strokeStyle=color;ctx.lineWidth=1.4;ctx.lineJoin='round';ctx.beginPath();let pen=false;
+ for(const i of points){if(i<0||!Number.isFinite(c.series.values[i])){pen=false;continue;}const xp=x(data.times[i]),yp=y(c.series.values[i]);if(pen)ctx.lineTo(xp,yp);else ctx.moveTo(xp,yp);pen=true;}ctx.stroke();
+ if(data.rows===1&&hasData){ctx.fillStyle=color;ctx.beginPath();ctx.arc(x(data.times[0]),y(c.series.values[0]),3,0,Math.PI*2);ctx.fill();}
+ if(hover>=0&&data.times[hover]>=view[0]&&data.times[hover]<=view[1]){const xp=x(data.times[hover]),val=c.series.values[hover];ctx.strokeStyle=theme.muted;ctx.lineWidth=1;ctx.setLineDash([4,4]);ctx.beginPath();ctx.moveTo(xp,top);ctx.lineTo(xp,top+ph);ctx.stroke();ctx.setLineDash([]);if(Number.isFinite(val)){ctx.fillStyle=color;ctx.beginPath();ctx.arc(xp,y(val),3.4,0,Math.PI*2);ctx.fill();}}
+ ctx.restore();if(!hasData){ctx.fillStyle=theme.muted;ctx.textAlign='center';ctx.fillText(tr('noData'),left+pw/2,top+ph/2);}c.geometry={left,pw};
+}
+function drawOverview(){
+ const theme=paintTheme(),{ctx,w,h}=sizeCanvas($('overview')),left=2,right=2,pw=w-left-right,[a,b]=limits(),x=t=>left+(t-a)/(b-a)*pw;
+ const s=data.series.find(s=>s.visible)||data.series[0],points=collect(s,0,data.rows-1,pw),[min,max]=yRange(s,points),y=v=>8+(max-v)/(max-min)*(h-16);
+ ctx.fillStyle=theme.bg;ctx.fillRect(left,4,pw,h-8);ctx.save();ctx.beginPath();ctx.rect(left,4,pw,h-8);ctx.clip();ctx.strokeStyle=theme.muted;ctx.lineWidth=1;ctx.beginPath();let pen=false;
+ for(const i of points){if(i<0||!Number.isFinite(s.values[i])){pen=false;continue;}if(pen)ctx.lineTo(x(data.times[i]),y(s.values[i]));else ctx.moveTo(x(data.times[i]),y(s.values[i]));pen=true;}ctx.stroke();
+ const xa=x(view[0]),xb=x(view[1]);ctx.globalAlpha=.72;ctx.fillStyle=theme.surface;ctx.fillRect(left,4,xa-left,h-8);ctx.fillRect(xb,4,w-right-xb,h-8);ctx.globalAlpha=.13;ctx.fillStyle=theme.accent;ctx.fillRect(xa,4,xb-xa,h-8);ctx.globalAlpha=1;ctx.strokeStyle=theme.accent;ctx.strokeRect(xa,4,Math.max(1,xb-xa),h-8);
+ for(const xx of[xa,xb]){ctx.fillStyle=theme.accent;ctx.fillRect(xx-3,h/2-10,6,20);ctx.fillStyle=theme.onAccent;ctx.fillRect(xx-.5,h/2-6,1,12);}ctx.restore();
+}
+function scheduleDraw(){if(drawPending||!data)return;drawPending=true;requestAnimationFrame(()=>{drawPending=false;for(const c of charts)drawChart(c);drawOverview();});}
+function updateHover(){
+ $('cursorTime').textContent=hover>=0&&data?formatTime(data.times[hover]):tr('cursorHint');if(!data)return;
+ for(const c of charts){const s=c.series,val=hover>=0?s.values[hover]:NaN;const text=hover>=0?formatValue(val)+(s.unit?' '+s.unit:''):'';c.output.textContent=text;c.readingValue.textContent=text||'—';}
+}
+function setHover(t){const i=nearest(t);hover=Math.abs(data.times[i]-t)>data.gapLimit&&data.times[i]!==t?-1:i;updateHover();scheduleDraw();}
+function bindChart(c){
+ const canvas=c.canvas;
+ canvas.addEventListener('wheel',e=>{e.preventDefault();zoom(Math.exp(Math.max(-250,Math.min(250,e.deltaY))*.003),chartFraction(c,e));},{passive:false});
+ canvas.addEventListener('dblclick',reset);canvas.addEventListener('keydown',keyNavigation);
+ canvas.addEventListener('pointerdown',e=>{if(e.button!==0)return;canvas.setPointerCapture(e.pointerId);drag={id:e.pointerId,x:e.clientX,view:view.slice(),width:c.geometry?.pw||canvas.clientWidth,moved:false};canvas.style.cursor='grabbing';});
+ canvas.addEventListener('pointermove',e=>{if(drag&&drag.id===e.pointerId){if(Math.abs(drag.x-e.clientX)>3)drag.moved=true;const shift=(drag.x-e.clientX)/drag.width*(drag.view[1]-drag.view[0]);if(drag.moved)setView(drag.view[0]+shift,drag.view[1]+shift);}else setHover(view[0]+chartFraction(c,e)*(view[1]-view[0]));});
+ canvas.addEventListener('pointerup',e=>{if(drag&&!drag.moved)setHover(view[0]+chartFraction(c,e)*(view[1]-view[0]));drag=null;canvas.style.cursor='crosshair';});
+ canvas.addEventListener('pointercancel',()=>{drag=null;canvas.style.cursor='crosshair';});
+ canvas.addEventListener('pointerleave',e=>{if(!drag&&e.pointerType!=='touch'){hover=-1;updateHover();scheduleDraw();}});
+}
+
+$('overview').addEventListener('pointerdown',e=>{
+ if(!data||e.button!==0)return;const r=e.currentTarget.getBoundingClientRect(),fraction=Math.max(0,Math.min(1,(e.clientX-r.left)/r.width)),[a,b]=limits(),t=a+fraction*(b-a),xa=(view[0]-a)/(b-a)*r.width,xb=(view[1]-a)/(b-a)*r.width,px=e.clientX-r.left;
+ const mode=Math.abs(px-xa)<9?'left':Math.abs(px-xb)<9?'right':'move';if(t<view[0]||t>view[1]){const span=view[1]-view[0];setView(t-span/2,t+span/2);}overviewDrag={mode,x:e.clientX,view:view.slice(),scale:(b-a)/r.width};e.currentTarget.setPointerCapture(e.pointerId);
+});
+$('overview').addEventListener('pointermove',e=>{if(!overviewDrag)return;const d=(e.clientX-overviewDrag.x)*overviewDrag.scale,[a,b]=overviewDrag.view,minSpan=Math.max(1000,data.cadence*2);if(overviewDrag.mode==='left')setView(Math.max(limits()[0],Math.min(a+d,b-minSpan)),b);else if(overviewDrag.mode==='right')setView(a,Math.min(limits()[1],Math.max(b+d,a+minSpan)));else setView(a+d,b+d);});
+for(const type of['pointerup','pointercancel'])$('overview').addEventListener(type,()=>overviewDrag=null);
+$('overview').addEventListener('dblclick',reset);$('overview').addEventListener('keydown',keyNavigation);
+for(const id of['openBtn','chooseBtn'])$(id).addEventListener('click',()=>$('fileInput').click());
+$('fileInput').addEventListener('change',e=>{loadFile(e.target.files[0]);e.target.value='';});
+$('helpBtn').addEventListener('click',()=>$('help').showModal());$('closeHelp').addEventListener('click',()=>$('help').close());
+$('resetBtn').addEventListener('click',reset);$('zoomInBtn').addEventListener('click',()=>zoom(.5));$('zoomOutBtn').addEventListener('click',()=>zoom(2));$('prevBtn').addEventListener('click',()=>pan(-.8));$('nextBtn').addEventListener('click',()=>pan(.8));
+for(const b of document.querySelectorAll('.preset'))b.addEventListener('click',()=>{const span=Number(b.dataset.span),center=hover>=0?data.times[hover]:(view[0]+view[1])/2;setView(center-span/2,center+span/2);});
+$('allBtn').addEventListener('click',()=>{for(const input of $('signals').querySelectorAll('input')){input.checked=true;input.dispatchEvent(new Event('change'));}});
+$('rangeForm').addEventListener('submit',e=>{e.preventDefault();const a=parseInput($('fromInput').value),b=parseInput($('toInput').value);if(!Number.isFinite(a)||!Number.isFinite(b)||a>=b){showError('errorRange');return;}showError();setView(a,b);});
+function closeLanguageMenu(restoreFocus=false){$('languageMenu').hidden=true;$('languageBtn').setAttribute('aria-expanded','false');if(restoreFocus)$('languageBtn').focus();}
+function openLanguageMenu(){const menu=$('languageMenu');menu.hidden=false;$('languageBtn').setAttribute('aria-expanded','true');menu.querySelector('[aria-checked="true"]').focus();}
+$('languageBtn').addEventListener('click',()=>{if($('languageMenu').hidden)openLanguageMenu();else closeLanguageMenu(true);});
+$('languageBtn').addEventListener('keydown',e=>{if(e.key==='ArrowDown'||e.key==='ArrowUp'){e.preventDefault();openLanguageMenu();}});
+$('languageMenu').addEventListener('click',e=>{const button=e.target.closest('[data-language]');if(!button)return;lang=button.dataset.language;try{localStorage.setItem('hmi-language',lang);}catch{}applyLanguage();closeLanguageMenu(true);});
+$('languageMenu').addEventListener('keydown',e=>{const items=[...e.currentTarget.querySelectorAll('[data-language]')],index=items.indexOf(document.activeElement);if(['ArrowDown','ArrowUp','Home','End'].includes(e.key)){e.preventDefault();let next=e.key==='Home'?0:e.key==='End'?items.length-1:(index+(e.key==='ArrowDown'?1:-1)+items.length)%items.length;items[next].focus();}else if(e.key==='Escape'){e.preventDefault();closeLanguageMenu(true);}else if(e.key==='Tab')closeLanguageMenu();});
+document.addEventListener('click',e=>{if(!e.target.closest('.language-picker'))closeLanguageMenu();});
+document.addEventListener('focusin',e=>{if(!e.target.closest('.language-picker'))closeLanguageMenu();});
+new MutationObserver(scheduleDraw).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+window.addEventListener('resize',scheduleDraw);
+document.addEventListener('dragenter',e=>{if(e.dataTransfer.types.includes('Files')){e.preventDefault();dragDepth++;$('dragOverlay').hidden=false;}});
+document.addEventListener('dragover',e=>{if(e.dataTransfer.types.includes('Files')){e.preventDefault();e.dataTransfer.dropEffect='copy';}});
+document.addEventListener('dragleave',e=>{e.preventDefault();dragDepth=Math.max(0,dragDepth-1);if(!dragDepth)$('dragOverlay').hidden=true;});
+document.addEventListener('drop',e=>{e.preventDefault();dragDepth=0;$('dragOverlay').hidden=true;if(e.dataTransfer.files.length)loadFile(e.dataTransfer.files[0]);});
+applyLanguage();
+// Read-only diagnostics used by regression checks.
+window.HMIApp={inspect:()=>data?({rows:data.rows,language:lang,theme:document.documentElement.dataset.theme,series:charts.map(c=>({name:c.series.name,label:c.series.label,visible:c.series.visible,autoY:c.autoY,yRange:c.yRange,manualRange:c.manualRange})),first:formatTime(data.times[0]),last:formatTime(data.times.at(-1)),view:view.map(t=>formatTime(t)),span:view[1]-view[0],skipped:data.skipped,gaps:data.gaps,hover:hover>=0?{time:formatTime(data.times[hover]),values:data.series.map(s=>s.values[hover])}:null}):null};
+
+</script>
+</body>
+</html>
