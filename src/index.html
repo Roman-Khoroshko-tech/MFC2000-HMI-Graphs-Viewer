@@ -48,6 +48,16 @@
           <canvas id="overview" class="overview" tabindex="0" role="img" data-i18n-aria="overviewAria"></canvas>
           <form class="date-inputs et-row" id="rangeForm"><label class="et-field"><span data-i18n="from">Від</span><input type="datetime-local" id="fromInput" step="1" required data-i18n-aria="rangeStart"></label><label class="et-field"><span data-i18n="to">До</span><input type="datetime-local" id="toInput" step="1" required data-i18n-aria="rangeEnd"></label><button class="et-button small" type="submit" data-i18n="show">Показати</button><span class="range-note et-muted et-small" data-i18n="sharedTime">Спільний час для всіх графіків</span></form>
         </div>
+        <div class="chart-view-controls">
+          <label class="et-check"><input id="combineCharts" type="checkbox" aria-controls="charts combinedChart"><span data-i18n="combinedChart">Спільний графік</span></label>
+        </div>
+        <article id="combinedChart" class="chart-card et-panel" hidden>
+          <div class="combined-chart-heading">
+            <p class="et-muted" data-i18n="combinedScales">Кожен сигнал має власну шкалу Y.</p>
+            <ul id="combinedLegend" class="combined-legend"></ul>
+          </div>
+          <canvas id="combinedCanvas" class="chart-canvas combined-canvas" tabindex="0" role="img" data-i18n-aria="combinedChart"></canvas>
+        </article>
         <div id="charts"></div><div id="noSignals" class="et-panel charts-empty et-muted" data-i18n="noSignals" hidden>Виберіть сигнали, щоб показати графіки.</div>
       </section>
     </div>

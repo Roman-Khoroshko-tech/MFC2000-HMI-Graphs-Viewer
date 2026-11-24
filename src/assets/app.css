@@ -31,3 +31,13 @@ body.et-page{font:14px/1.5 Inter,"Segoe UI",Arial,sans-serif}
 
 #overview[aria-disabled=true],.workspace[data-empty=true] .chart-canvas{cursor:default}
 .author-tools{font-size:12px;font-weight:750;letter-spacing:-.5px}.author-arrow{font-size:10px;margin-left:1px}
+
+.chart-view-controls{display:flex;justify-content:flex-end;margin-bottom:.65rem}
+.chart-view-controls .et-check{min-height:2.25rem;font-size:.85rem;font-weight:600}
+.combined-chart-heading{padding:.75rem .9rem}
+.combined-chart-heading p{font-size:.75rem;margin-bottom:.5rem}
+.combined-legend{display:flex;flex-wrap:wrap;gap:.4rem 1rem;list-style:none;margin:0;padding:0}
+.combined-legend li{display:flex;flex-wrap:wrap;align-items:center;gap:.2rem .45rem;min-width:0;font-size:.75rem;overflow-wrap:anywhere}
+.combined-legend .signal-color{margin:0}
+.combined-value{font-family:var(--et-mono)}
+.combined-canvas{height:clamp(360px,65vh,760px)}
